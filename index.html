@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klarna EMD Generator</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Klarna Extra Merchant Data Generator</h1>
+        
+        <!-- Disclaimer box -->
+        <div class="disclaimer-box">
+            <div class="disclaimer-header">
+                <span class="info-icon">i</span>
+                Information
+            </div>
+            <div class="disclaimer-content">
+                <strong>About this tool:</strong><br>
+                This tool uses the official Klarna Extra Merchant Data schema retrieved from 
+                <a href="https://docs.klarna.com/api/extra-merchant-data.json" target="_blank">docs.klarna.com/api/extra-merchant-data.json</a>
+                <br><br>
+                <strong>How to use:</strong><br>
+                1. Fill in the relevant fields in any section (Air Reservation, Hotel, etc.)<br>
+                2. Click "Add" buttons to create new entries in each section<br>
+                3. Click "Generate EMD" to create the EMD JSON structure<br>
+                4. Use "Copy EMD to Clipboard" to copy the formatted JSON<br>
+                5. Use "Serialize EMD" to get the serialized string format
+                <br><br>
+                <strong>Notes:</strong><br>
+                • All data is validated according to Klarna's specifications<br>
+                • The schema is automatically updated when Klarna makes changes<br>
+                • No data is sent to any server - all validation happens in your browser<br>
+                • Red validation messages indicate errors that need to be fixed
+            </div>
+        </div>
+
+        <!-- Generated EMD section -->
+        <div class="output-section">
+            <div>Generated EMD:</div>
+            <div class="button-group">
+                <button class="generate-btn" onclick="generateEMD()">Generate EMD</button>
+                <button class="generate-btn" onclick="copyGeneratedEMD()">Copy EMD to Clipboard</button>
+                <button class="generate-btn" onclick="showSerializedEMD()">Serialize EMD</button>
+            </div>
+            <div id="output" class="output-box"></div>
+        </div>
+    </div>
+
+    <!-- Add popup HTML -->
+    <div id="serializePopup" class="popup" style="display: none;">
+        <div class="popup-content">
+            <div class="popup-header">
+                <span>Serialized EMD</span>
+                <button class="close-btn" onclick="closeSerializePopup()">×</button>
+            </div>
+            <div class="popup-body">
+                <div class="serialized-container">
+                    <code id="serializedOutput"></code>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button class="generate-btn" onclick="copySerializedEMD()">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="emd_schema.js"></script>
+</body>
+</html> 

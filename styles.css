@@ -1,0 +1,444 @@
+/* Windows 95 Theme */
+:root {
+    --win95-gray: #c0c0c0;
+    --win95-blue: #000080;
+    --win95-white: #ffffff;
+    --win95-dark: #808080;
+    --win95-darker: #404040;
+}
+
+body {
+    background-color: #008080; /* Classic Windows 95 teal */
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+    margin: 0;
+    padding: 16px;
+}
+
+.container {
+    border: 2px solid var(--win95-dark);
+    background-color: var(--win95-gray);
+    min-height: calc(100vh - 32px);
+    position: relative;
+    padding-bottom: 200px;
+    margin-bottom: 16px;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+    background-color: var(--win95-blue);
+    color: var(--win95-white);
+    margin: 0;
+    padding: 2px 4px;
+    font-size: 1rem;
+    font-weight: normal;
+}
+
+.section-header {
+    background-color: var(--win95-blue);
+    color: var(--win95-white);
+    padding: 2px 4px;
+    margin-top: 2px;
+}
+
+.section-content {
+    padding: 8px;
+}
+
+.form-group {
+    margin-bottom: 8px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 2px 4px;
+    border: 2px inset var(--win95-dark);
+    background-color: var(--win95-white);
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.output-section {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    background-color: var(--win95-gray);
+    border: 2px solid var(--win95-dark);
+    border-top-color: var(--win95-darker);
+    border-left-color: var(--win95-darker);
+    padding: 8px;
+    z-index: 1000;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.generate-btn {
+    background-color: var(--win95-blue);
+    color: var(--win95-white);
+    border: 2px outset var(--win95-dark);
+    padding: 2px 8px;
+    margin: 4px 0;
+    cursor: pointer;
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+}
+
+.generate-btn:active {
+    border-style: inset;
+}
+
+.output-box {
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: var(--win95-white);
+    border: 2px inset var(--win95-dark);
+    padding: 8px;
+    margin-top: 4px;
+    font-family: monospace;
+    white-space: pre;
+}
+
+/* Add to your existing CSS */
+.description {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    color: var(--win95-darker);
+}
+
+.array-container {
+    margin: 8px 0;
+}
+
+.array-item {
+    border: 1px solid var(--win95-dark);
+    padding: 8px;
+    margin: 8px 0;
+    position: relative;
+}
+
+.add-btn {
+    background-color: var(--win95-gray);
+    border: 2px outset var(--win95-dark);
+    padding: 2px 8px;
+    cursor: pointer;
+}
+
+.remove-btn {
+    background-color: var(--win95-gray);
+    border: 2px outset var(--win95-dark);
+    width: 16px;
+    height: 14px;
+    line-height: 8px;
+    text-align: center;
+    font-size: 12px;
+    font-family: 'Tahoma', sans-serif;
+    cursor: pointer;
+    padding: 0;
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-btn:active {
+    border-style: inset;
+    padding-top: 1px;
+    padding-left: 1px;
+}
+
+.add-btn:active,
+.remove-btn:active {
+    border-style: inset;
+}
+
+/* Add to existing CSS */
+.help-text {
+    font-size: 0.8rem;
+    color: var(--win95-darker);
+    margin-bottom: 4px;
+    white-space: pre-line;
+}
+
+.validation-rules {
+    font-size: 0.8rem;
+    color: var(--win95-darker);
+    margin-top: 2px;
+}
+
+.validation-message {
+    font-size: 0.8rem;
+    margin-top: 2px;
+    min-height: 1em;
+}
+
+.validation-message.invalid {
+    color: #aa0000;
+}
+
+.validation-message.valid {
+    color: #008000;
+}
+
+.form-control.is-invalid {
+    border-color: #aa0000;
+    background-color: #ffeeee;
+}
+
+.form-control.is-valid {
+    border-color: #008000;
+    background-color: #eeffee;
+}
+
+/* Add to existing CSS */
+.array-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--win95-gray);
+    padding: 4px;
+    padding-right: 20px;
+    border-bottom: 1px solid var(--win95-dark);
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.array-items {
+    margin-top: 8px;
+}
+
+.button-container {
+    margin-bottom: 8px;
+}
+
+.nested-object {
+    border: 1px solid var(--win95-dark);
+    padding: 8px;
+    margin: 8px 0;
+}
+
+.nested-object-label {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.form-container {
+    padding: 4px;
+}
+
+.array-container .array-container {
+    margin-left: 16px;
+}
+
+.section:last-of-type {
+    margin-bottom: 220px;
+}
+
+.output-box::-webkit-scrollbar {
+    width: 16px;
+}
+
+.output-box::-webkit-scrollbar-track {
+    background: var(--win95-gray);
+    border: 2px solid;
+    border-top-color: var(--win95-darker);
+    border-left-color: var(--win95-darker);
+}
+
+.output-box::-webkit-scrollbar-thumb {
+    background: var(--win95-gray);
+    border: 2px solid;
+    border-top-color: var(--win95-highlight);
+    border-left-color: var(--win95-highlight);
+    border-right-color: var(--win95-darker);
+    border-bottom-color: var(--win95-darker);
+}
+
+/* Add to your existing CSS */
+.disclaimer-box {
+    margin: 8px 0;
+    border: 2px solid var(--win95-dark);
+    background-color: var(--win95-gray);
+}
+
+.disclaimer-header {
+    background-color: var(--win95-blue);
+    color: var(--win95-white);
+    padding: 2px 4px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    background-color: var(--win95-white);
+    color: var(--win95-blue);
+    border-radius: 50%;
+    margin-right: 6px;
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.disclaimer-content {
+    padding: 8px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.disclaimer-content a {
+    color: var(--win95-blue);
+    text-decoration: underline;
+}
+
+.disclaimer-content a:hover {
+    text-decoration: none;
+}
+
+/* Add to your existing CSS */
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+
+.popup-content {
+    background: var(--win95-gray);
+    border: 2px solid var(--win95-dark);
+    border-top-color: var(--win95-highlight);
+    border-left-color: var(--win95-highlight);
+    width: auto;
+    min-width: 300px;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+}
+
+.popup-header {
+    background: var(--win95-blue);
+    color: var(--win95-white);
+    padding: 2px 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-btn {
+    background: var(--win95-gray);
+    border: 2px outset var(--win95-dark);
+    width: 16px;
+    height: 14px;
+    line-height: 8px;
+    text-align: center;
+    font-size: 12px;
+    cursor: pointer;
+    color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.close-btn:active {
+    border-style: inset;
+    padding-top: 1px;
+    padding-left: 1px;
+}
+
+.popup-body {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.serialized-container {
+    background: var(--win95-white);
+    border: 2px inset var(--win95-dark);
+    padding: 8px;
+    font-family: monospace;
+    white-space: pre;
+    overflow-x: auto;
+    text-align: left;
+    margin-bottom: 0;
+}
+
+.serialized-container code {
+    display: block;
+    text-align: left;
+}
+
+/* Style for the copy button */
+.copy-btn {
+    background-color: var(--win95-gray);
+    border: 2px outset var(--win95-dark);
+    padding: 4px 16px;
+    cursor: pointer;
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+    align-self: flex-end;
+    min-width: 100px;
+    margin-top: 4px;
+}
+
+.copy-btn:active {
+    border-style: inset;
+    padding: 5px 17px 3px 15px;
+}
+
+/* Update/add these styles */
+.popup-footer {
+    padding: 8px;
+    border-top: 2px solid var(--win95-dark);
+    display: flex;
+    justify-content: flex-end;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Remove the old copy-btn styles and use generate-btn instead */
+.popup-footer .generate-btn {
+    margin: 0;
+}
+
+.popup-body {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.serialized-container {
+    background: var(--win95-white);
+    border: 2px inset var(--win95-dark);
+    padding: 8px;
+    font-family: monospace;
+    white-space: pre;
+    overflow-x: auto;
+    text-align: left;
+}

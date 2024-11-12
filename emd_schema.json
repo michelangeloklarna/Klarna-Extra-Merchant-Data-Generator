@@ -1,0 +1,1500 @@
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "id": "http://klarna.com/v2/emd#",
+    "description": "Extra Merchant Data Payload Schema",
+    "type": "object",
+    "properties": {
+        "air_reservation_details": {
+            "description": "Information about air travel reservations and passengers.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "pnr": {
+                        "description": "The passenger name record (PNR).  \nExample: `Y2YWJD`",
+                        "type": "string"
+                    },
+                    "itinerary": {
+                        "description": "The air travel itinerary details. One object represents one travel segment.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "departure": {
+                                    "description": "The 3-letter IATA airport code of the departure airport.  \nExample: `AMS`",
+                                    "minLength": 3,
+                                    "maxLength": 3,
+                                    "type": "string"
+                                },
+                                "departure_city": {
+                                    "description": "The city of departure.  \nExample: `Amsterdam`",
+                                    "type": "string"
+                                },
+                                "arrival": {
+                                    "description": "The 3-letter IATA airport code of the arrival airport.  \nExample: `LHR`",
+                                    "minLength": 3,
+                                    "maxLength": 3,
+                                    "type": "string"
+                                },
+                                "arrival_city": {
+                                    "description": "The city of arrival.  \nExample: `London`",
+                                    "type": "string"
+                                },
+                                "carrier": {
+                                    "description": "The airline's IATA code.  \nExample: `KL`",
+                                    "type": "string",
+                                    "minLength": 2,
+                                    "maxLength": 2
+                                },
+                                "segment_price": {
+                                    "description": "The price of the travel segment in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:  \n - EUR 100,10 is `10010` in minor units.  \n - SEK 100 is `10000` in minor units.  \n - JPY 100 is `100` in minor units.",
+                                    "type": "number"
+                                },
+                                "departure_date": {
+                                    "description": "The departure date. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                                },
+                                "ticket_delivery_method": {
+                                    "description": "The way in which the ticket is delivered. The following lowercase values are accepted:  \n - `pick_up` — The ticket is picked up in person.  \n - `email` — The ticket is sent by email.  \n - `post` — The ticket is sent by post.  \n - `phone` — The ticket is sent to a phone number.",
+                                    "type": "string",
+                                    "enum": ["pick_up", "email", "post", "phone"]
+                                },
+                                "ticket_delivery_recipient": {
+                                    "description": "The recipient to whom the ticket is delivered. The value depends on the selected `ticket_delivery_method`:  \n - For `email`, use the recipient's email address. Example: `john.doe@email.com`  \n - For `phone`, use the recipient's phone number.  \n - For `pick_up` and `post`, combine the recipient's first name and last name. Example: `John Doe`",
+                                    "type": "string"
+                                },
+                                "passenger_id": {
+                                    "description": "The array containing each passenger's index passed in the `passengers.id` object.  \nExample:  \n - If there's 1 passenger, use `[1]`  \n - If there are 2 passengers, use `[1,2]`  \n - If there are 3 passengers, use `[1,2,3]`",
+                                    "type": "array of integers",
+                                    "items": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "class": {
+                                    "description": "The service class.  \nExample: `economy`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "insurance": {
+                        "description": "Information about insurance for the air travel.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "insurance_company": {
+                                    "description": "The name of the insurance company.  \nExample: `AON`",
+                                    "type": "string"
+                                },
+                                "insurance_type": {
+                                    "description": "The scope of the insurance coverage. The following lowercase values are accepted:  \n - `cancellation` — Coverage for cancellation of any services during the travel  \n - `travel` — Coverage for incident-related expenses that occur during the travel \n - `cancellation_travel` — Coverage for the cancellation of the whole travel \n - `bankruptcy` — Coverage in case of the airline's bankruptcy",
+                                    "type": "string",
+                                    "enum": ["cancellation", "travel", "cancellation_travel", "bankruptcy"]
+                                },
+                                "insurance_price": {
+                                    "description": "The price of insurance in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:   \n - EUR 20 is `2000` in minor units.  \n - SEK 200 is `20000` in minor units.  \n - JPY 10 is `10` in minor units.",
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    },
+                    "passengers": {
+                        "description": "Information about the passengers.",
+                        "type": "array",
+                        "items": {
+                            "name": "Person",
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "description": "The passenger's index number. The value must be one of those specified in the `itinerary.passenger_id` array.",
+                                    "type": "integer"
+                                },
+                                "title": {
+                                    "description": "The title used before the passenger's name. \nThe following lowercase values are accepted:  \n - `mr` —  Mr.  \n - `mrs` — Mrs.  \n - `ms` — Ms.  \n\n  For passengers under 12 years of age, leave blank.",
+                                    "type": "enum",
+                                    "enum": ["mr", "mrs", "ms", ""]
+                                },
+                                "first_name": {
+                                    "description": "The passenger's first name.  \nExample: `John`",
+                                    "type": "string"
+                                },
+                                "last_name": {
+                                    "description": "The passenger's last name.  \nExample: `Doe`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "affiliate_name": {
+                        "description": "The name of the referring partner. If there's no referring partner, leave blank.  \nExample: `Booking.com`",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "bus_reservation_details": {
+            "description": "Information about bus travel reservations and passengers.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "pnr": {
+                        "description": "The passenger name record.  \nExample: `121r2sx121`",
+                        "type": "string"
+                    },
+                    "itinerary": {
+                        "description": "The bus travel itinerary details. One object represents one travel segment.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "departure": {
+                                    "description": "Not applicable for bus ticket reservations.",
+                                    "type": "string"
+                                },
+                                "departure_city": {
+                                    "description": "The city of departure.  \nExample:  `London`",
+                                    "type": "string"
+                                },
+                                "arrival": {
+                                    "description": "Not applicable for bus ticket reservations.",
+                                    "type": "string"
+                                },
+                                "arrival_city": {
+                                    "description": "The city of arrival.  \nExample: `Amsterdam`",
+                                    "type": "string"
+                                },
+                                "carrier": {
+                                    "description": "The name of the bus transportation company.  \nExample: `Eurolines`",
+                                    "type": "string"
+                                },
+                                "segment_price": {
+                                    "description": "The price of the travel segment in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:  \n - EUR 100,10 is `10010` in minor units.  \n - SEK 100 is `10000` in minor units.  \n - JPY 100 is `100` in minor units.",
+                                    "type": "number"
+                                },
+                                "departure_date": {
+                                    "description": "The departure date. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                                },
+                                "ticket_delivery_method": {
+                                    "description": "The way in which the ticket is delivered. The following lowercase values are accepted:  \n - `pick_up` — The ticket is picked up in person.  \n - `email` — The ticket is sent by email.  \n - `post` — The ticket is sent by post.  \n - `phone` — The ticket is sent to a phone number.",
+                                    "type": "string",
+                                    "enum": ["pick_up", "email", "post", "phone"]
+                                },
+                                "ticket_delivery_recipient": {
+                                    "description": "The recipient to whom the ticket is delivered. The value depends on the selected `ticket_delivery_method`:  \n - For `email`, use the recipient's email address. Example: `john.doe@email.com`  \n - For `phone`, use the recipient's phone number.  \n - For `pick_up` and `post`, combine the recipient's first name and last name. Example: `John Doe`",
+                                    "type": "string"
+                                },
+                                "passenger_id": {
+                                    "description": "The array containing each passenger's index passed in the `passengers.id` object.  \nExample:  \n - If there's 1 passenger, use `[1]`  \n - If there are 2 passengers, use `[1,2]`  \n - If there are 3 passengers, use `[1,2,3]`",
+                                    "type": "array of integers",
+                                    "items": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "class": {
+                                    "description": "The seating class. All formats are allowed.  \nExample: `1st`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "insurance": {
+                        "description": "Information about insurance for the bus travel.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "insurance_company": {
+                                    "description": "The name of the insurance company.  \nExample: `AON`",
+                                    "type": "string"
+                                },
+                                "insurance_type": {
+                                    "description": "The scope of the insurance coverage. The following lowercase values are accepted:  \n - `cancellation` — Coverage for cancellation of any services during the travel  \n - `travel` — Coverage for incident-related expenses that occur during the travel \n - `cancellation_travel` — Coverage for the cancellation of the whole travel \n - `bankruptcy` — Coverage in case of the bus transportation company's bankruptcy",
+                                    "type": "string",
+                                    "enum": ["cancellation", "travel", "cancellation_travel", "bankruptcy"]
+                                },
+                                "insurance_price": {
+                                    "description": "The price of insurance in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:   \n - EUR 20 is `2000` in minor units.  \n - SEK 200 is `20000` in minor units.  \n - JPY 10 is `10` in minor units.",
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    },
+                    "passengers": {
+                        "description": "Information about the passengers.",
+                        "type": "array",
+                        "items": {
+                            "name": "Person",
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "description": "The passenger's index number. The value must be one of those specified in the `itinerary.passenger_id` array.",
+                                    "type": "integer"
+                                },
+                                "title": {
+                                    "description": "The title used before the passenger's name. \nThe following lowercase values are accepted:  \n - `mr` —  Mr.  \n - `mrs` — Mrs.  \n - `ms` — Ms.  \n\n  For passengers under 12 years of age, leave blank.",
+                                    "type": "string",
+                                    "enum": ["mr", "mrs", "ms", ""]
+                                },
+                                "first_name": {
+                                    "description": "The passenger's first name.  \nExample: `John`",
+                                    "type": "string"
+                                },
+                                "last_name": {
+                                    "description": "The passenger's last name.  \nExample: `Doe`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "affiliate_name": {
+                        "description": "The name of the referring partner. If there's no referring partner, leave blank.  \nExample: `eurolines.de`",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "train_reservation_details": {
+            "description": "Information about train travel reservations and passengers.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "pnr": {
+                        "description": "The passenger name record (PNR).  \nExample: `121r2sx121`",
+                        "type": "string"
+                    },
+                    "itinerary": {
+                        "description": "The itinerary details. One object represents one travel segment.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "departure": {
+                                    "description": "Not applicable for train ticket reservations.",
+                                    "type": "string"
+                                },
+                                "departure_city": {
+                                    "description": "The city of departure.",
+                                    "type": "string"
+                                },
+                                "arrival": {
+                                    "description": "Not applicable for train ticket reservations.",
+                                    "type": "string"
+                                },
+                                "arrival_city": {
+                                    "description": "The city of arrival.",
+                                    "type": "string"
+                                },
+                                "carrier": {
+                                    "description": "The name of the train operator company.  \nExample: `Eurostar`",
+                                    "type": "string"
+                                },
+                                "segment_price": {
+                                    "description": "The price of the travel segment in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:  \n - EUR 100,10 is `10010` in minor units.  \n - SEK 100 is `10000` in minor units.  \n - JPY 100 is `100` in minor units.",
+                                    "type": "number"
+                                },
+                                "departure_date": {
+                                    "description": "The departure date. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                                },
+                                "ticket_delivery_method": {
+                                    "description": "The way in which the ticket is delivered. The following lowercase values are accepted:  \n - `pick_up` — The ticket is picked up in person.  \n - `email` — The ticket is sent by email.  \n - `post` — The ticket is sent by post.  \n - `phone` — The ticket is sent to a phone number.",
+                                    "type": "string",
+                                    "enum": ["pick_up", "email", "post", "phone"]
+                                },
+                                "ticket_delivery_recipient": {
+                                    "description": "The recipient to whom the ticket is delivered. The value depends on the selected `ticket_delivery_method`:  \n - For `email`, use the recipient's email address. Example: `john.doe@email.com`  \n - For `phone`, use the recipient's phone number.  \n - For `pick_up` and `post`, combine the recipient's first name and last name. Example: `John Doe`",
+                                    "type": "string"
+                                },
+                                "passenger_id": {
+                                    "description": "The array containing each passenger's index passed in the `passengers.id` object.  \nExample:  \n - If there's 1 passenger, use `[1]`  \n - If there are 2 passengers, use `[1,2]`  \n - If there are 3 passengers, use `[1,2,3]`",
+                                    "type": "array of integers",
+                                    "items": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "class": {
+                                    "description": "The seating class. All formats are allowed.  \nExample: `1st`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "insurance": {
+                        "description": "Information about insurance for the train travel.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "insurance_company": {
+                                    "description": "The name of the insurance company.  \nExample: `AON`",
+                                    "type": "string"
+                                },
+                                "insurance_type": {
+                                    "description": "The scope of the insurance coverage. The following lowercase values are accepted:  \n - `cancellation` — Coverage for cancellation of any services during the travel  \n - `travel` — Coverage for incident-related expenses that occur during the travel \n - `cancellation_travel` — Coverage for the cancellation of the whole travel \n - `bankruptcy` — Coverage in case of the train operator's bankruptcy",
+                                    "type": "string",
+                                    "enum": ["cancellation", "travel", "cancellation_travel", "bankruptcy"]
+                                },
+                                "insurance_price": {
+                                    "description": "The price of insurance in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:   \n - EUR 20 is `2000` in minor units.  \n - SEK 200 is `20000` in minor units.  \n - JPY 10 is `10` in minor units.",
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    },
+                    "passengers": {
+                        "description": "Information about the passengers.",
+                        "type": "array",
+                        "items": {
+                            "name": "Person",
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "description": "The passenger's index number. The value must be one of those specified in the `itinerary.passenger_id` array.",
+                                    "type": "integer"
+                                },
+                                "title": {
+                                    "description": "The title used before the passenger's name. \nThe following lowercase values are accepted:  \n - `mr` —  Mr.  \n - `mrs` — Mrs.  \n - `ms` — Ms.  \n\n  For passengers under 12 years of age, leave blank.",
+                                    "type": "string",
+                                    "enum": ["mr", "mrs", "ms", ""]
+                                },
+                                "first_name": {
+                                    "description": "The passenger's first name.  \nExample: `John`",
+                                    "type": "string"
+                                },
+                                "last_name": {
+                                    "description": "The passenger's last name.  \nExample: `Doe`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "affiliate_name": {
+                        "description": "The name of the referring partner. If there's no referring partner, leave blank.  \nExample: `eurostar.com`",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "ferry_reservation_details": {
+            "description": "Information about ferry travel reservations and passengers.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "pnr": {
+                        "description": "The passenger name record (PNR).  \nExample: `121r2sx121`",
+                        "type": "string"
+                    },
+                    "itinerary": {
+                        "description": "The ferry route details. One object represents one travel segment.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "departure": {
+                                    "description": "Not applicable for ferry ticket reservations.",
+                                    "type": "string"
+                                },
+                                "departure_city": {
+                                    "description": "The city of departure.  \nExample: `Calais`",
+                                    "type": "string"
+                                },
+                                "arrival": {
+                                    "description": "Not applicable for ferry ticket reservations.",
+                                    "type": "string"
+                                },
+                                "arrival_city": {
+                                    "description": "The city of arrival.  \nExample:  `Dover`",
+                                    "type": "string"
+                                },
+                                "carrier": {
+                                    "description": "The name of the ferry line.  \nExample: `P&O`",
+                                    "type": "string"
+                                },
+                                "segment_price": {
+                                    "description": "The price of the travel segment in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:  \n - EUR 100,10 is `10010` in minor units.  \n - SEK 100 is `10000` in minor units.  \n - JPY 100 is `100` in minor units.",
+                                    "type": "number"
+                                },
+                                "departure_date": {
+                                    "description": "The departure date. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                                },
+                                "ticket_delivery_method": {
+                                    "description": "The way in which the ticket is delivered. The following lowercase values are accepted:  \n - `pick_up` — The ticket is picked up in person.  \n - `email` — The ticket is sent by email.  \n - `post` — The ticket is sent by post.  \n - `phone` — The ticket is sent to a phone number.",
+                                    "type": "string",
+                                    "enum": ["pick_up", "email", "post", "phone"]
+                                },
+                                "ticket_delivery_recipient": {
+                                    "description": "The recipient to whom the ticket is delivered. The value depends on the selected `ticket_delivery_method`:  \n - For `email`, use the recipient's email address. Example: `john.doe@email.com`  \n - For `phone`, use the recipient's phone number.  \n - For `pick_up` and `post`, combine the recipient's first name and last name. Example: `John Doe`",
+                                    "type": "string"
+                                },
+                                "passenger_id": {
+                                    "description": "The array containing each passenger's index passed in the `passengers.id` object.  \nExample:  \n - If there's 1 passenger, use `[1]`  \n - If there are 2 passengers, use `[1,2]`  \n - If there are 3 passengers, use `[1,2,3]`",
+                                    "type": "array of integers",
+                                    "items": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "class": {
+                                    "description": "The seating class. All formats are allowed.  \nExample: `1st`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "insurance": {
+                        "description": "Information about insurance for the ferry travel.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "insurance_company": {
+                                    "description": "The name of the insurance company.  \nExample: `AON`",
+                                    "type": "string"
+                                },
+                                "insurance_type": {
+                                    "description": "The scope of the insurance coverage. The following lowercase values are accepted:  \n - `cancellation` — Coverage for cancellation of any services during the travel  \n - `travel` — Coverage for incident-related expenses that occur during the travel \n - `cancellation_travel` — Coverage for the cancellation of the whole travel \n - `bankruptcy` — Coverage in case of the ferry line's bankruptcy",
+                                    "type": "string",
+                                    "enum": ["cancellation", "travel", "cancellation_travel", "bankruptcy"]
+                                },
+                                "insurance_price": {
+                                    "description": "The price of insurance in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:   \n - EUR 20 is `2000` in minor units.  \n - SEK 200 is `20000` in minor units.  \n - JPY 10 is `10` in minor units.",
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    },
+                    "passengers": {
+                        "description": "Information about the passengers.",
+                        "type": "array",
+                        "items": {
+                            "name": "Person",
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "description": "The passenger's index number. The value must be one of those specified in the `itinerary.passenger_id` array.",
+                                    "type": "integer"
+                                },
+                                "title": {
+                                    "description": "The title used before the passenger's name. \nThe following lowercase values are accepted:  \n - `mr` —  Mr.  \n - `mrs` — Mrs.  \n - `ms` — Ms.  \n\n  For passengers under 12 years of age, leave blank.",
+                                    "type": "string",
+                                    "enum": ["mr", "mrs", "ms", ""]
+                                },
+                                "first_name": {
+                                    "description": "The passenger's first name.  \nExample: `John`",
+                                    "type": "string"
+                                },
+                                "last_name": {
+                                    "description": "The passenger's last name.  \nExample: `Doe`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "affiliate_name": {
+                        "description": "The name of the referring partner. If there's no referring partner, leave blank.  \nExample: `poferries.com`",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "hotel_reservation_details": {
+            "description": "Information about hotel room reservations.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "pnr": {
+                        "description": "The passenger name record (PNR).  \nExample: `20qsx2121`",
+                        "type": "string"
+                    },
+                    "number_reservations_by_guest": {
+                        "description": "The number of reservations the guest has made over the last 12 months.",
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "host": {
+                        "description": "Information about the host or hotel.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "host_id": {
+                                    "description": "A unique identifier for the host or hotel on a booking platform.",
+                                    "type": "string"
+                                },
+                                "registration_date": {
+                                    "description": "The date and time of the host's or hotel's registration date on the platform. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                    "type": "string",
+                                    "example": "2012-11-24T15:00"
+                                },
+                                "number_reservations_by_host": {
+                                    "description": "The total number of reservations made with the host over the last 12 months.",
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    },
+                    "hotel_itinerary": {
+                        "description": "The hotel itinerary details. One object represents one hotel stay.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "hotel_name": {
+                                    "description": "The name of the hotel.  \nExample:  `Hotel ltd.`",
+                                    "type": "string"
+                                },
+                                "address": {
+                                    "description": "The address of the hotel.",
+                                    "type": "object",
+                                    "properties": {
+                                        "street_address": {
+                                            "description": "The street address of the hotel.  \nExample: `New Burlington St 10`",
+                                            "type": "string"
+                                        },
+                                        "postal_code": {
+                                            "description": "The ZIP code of the hotel.  \nExample: `W1B 1JA`",
+                                            "type": "string"
+                                        },
+                                        "city": {
+                                            "description": "The city where the hotel is located.  \nExample: `London`",
+                                            "type": "string"
+                                        },
+                                        "country": {
+                                            "description": "The country where the hotel is located. The value must be a 2-letter country code in ISO 3166 alpha-2 standard.  \nExample: `GB`",
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "start_time": {
+                                    "description": "The date and time of the guest's arrival at the hotel. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                                },
+                                "end_time": {
+                                    "description": "The date and time of the guest's departure from the hotel. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                                },
+                                "number_of_rooms": {
+                                    "description": "The number of booked hotel rooms.",
+                                    "type": "integer"
+                                },
+                                "passenger_id": {
+                                    "description": "The array containing each guest's index passed in the `passengers.id` object.  \nExample:  \n - If there's 1 passenger, use `[1]`  \n - If there are 2 passengers, use `[1,2]`  \n - If there are 3 passengers, use `[1,2,3]`",
+                                    "type": "array of integers",
+                                    "items": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "ticket_delivery_method": {
+                                    "description": "The way in which the ticket is delivered. The following lowercase values are accepted:  \n - `pick_up` — The ticket is picked up in person.  \n - `email` — The ticket is sent by email.  \n - `post` — The ticket is sent by post.  \n - `phone` — The ticket is sent to a phone number.",
+                                    "type": "string",
+                                    "enum": ["pick_up", "email", "post", "phone"]
+                                },
+                                "ticket_delivery_recipient": {
+                                    "description": "The recipient to whom the ticket is delivered. The value depends on the selected `ticket_delivery_method`:  \n - For `email`, use the recipient's email address. Example: `john.doe@email.com`  \n - For `phone`, use the recipient's phone number.  \n - For `pick_up` and `post`, combine the recipient's first name and last name. Example: `John Doe`",
+                                    "type": "string"
+                                },
+                                "hotel_price": {
+                                    "description": "The total booking amount in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:  \n - EUR 230,50 is `23050` in minor units.  \n - SEK 230 is `23000` in minor units.  \n - JPY 230 is `230` in minor units.",
+                                    "type": "number"
+                                },
+                                "class": {
+                                    "description": "The room class.  \nExample: `Presidential suite`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "insurance": {
+                        "description": "Information about insurance for the hotel reservation.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "insurance_company": {
+                                    "description": "The name of the insurance company.  \nExample: `AON`",
+                                    "type": "string"
+                                },
+                                "insurance_type": {
+                                    "description": "The scope of the insurance coverage. The following lowercase values are accepted:  \n - `cancellation` — Coverage for cancellation of any services during the travel  \n - `travel` — Coverage for incident-related expenses that occur during the travel \n - `cancellation_travel` — Coverage for the cancellation of the whole travel \n - `bankruptcy` — Coverage in case of the host's or hotel's bankruptcy",
+                                    "type": "string",
+                                    "enum": ["cancellation", "travel", "cancellation_travel", "bankruptcy"]
+                                },
+                                "insurance_price": {
+                                    "description": "The price of insurance in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:   \n - EUR 20 is `2000` in minor units.  \n - SEK 200 is `20000` in minor units.  \n - JPY 10 is `10` in minor units.",
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    },
+                    "passengers": {
+                        "description": "Information about the guests.",
+                        "type": "array",
+                        "items": {
+                            "name": "Person",
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "description": "The guests's index number. The value must be one of those specified in the `itinerary.passenger_id` array.",
+                                    "type": "integer"
+                                },
+                                "title": {
+                                    "description": "The title used before the guest's name. \nThe following lowercase values are accepted:  \n - `mr` —  Mr.  \n - `mrs` — Mrs.  \n - `ms` — Ms.  \n\n  For guests under 12 years of age, leave blank.",
+                                    "type": "string",
+                                    "enum": ["mr", "mrs", "ms", ""]
+                                },
+                                "first_name": {
+                                    "description": "The guest's first name.  \nExample: `John`",
+                                    "type": "string"
+                                },
+                                "last_name": {
+                                    "description": "The guest's last name.  \nExample:  `Doe`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "affiliate_name": {
+                        "description": "The name of the referring partner. If there's no referring partner, leave blank.  \nExample: `Hotels.com`",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "trip_reservation_details": {
+            "description": "Information about trip reservations that include multiple services, for example, flight reservation, hotel room reservation, and train reservation, where information about the services isn't available at the time of booking.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "trip_itinerary": {
+                        "description": "The trip's itinerary details.",
+                        "type": "object",
+                        "properties": {
+                            "start_time": {
+                                "description": "The trip's start date and time. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            },
+                            "initial_city": {
+                                "description": "The city of departure.  \nExample: `Barcelona`",
+                                "type": "string"
+                            },
+                            "initial_country": {
+                                "description": "The country of departure.  \nExample: `Spain`",
+                                "type": "string"
+                            },
+                            "end_time": {
+                                "description": "The trip's end date and time. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            },
+                            "final_city": {
+                                "description": "The city of arrival.  \nExample: `Berlin`",
+                                "type": "string"
+                            },
+                            "final_country": {
+                                "description": "The country of arrival.  \nExample: `Germany`",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "trip_passengers": {
+                        "description": "Information about the passengers.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "description": "The passenger's index number.",
+                                    "type": "integer",
+                                    "format": "int32"
+                                },
+                                "first_name": {
+                                    "description": "The passenger's first name.  \nExample: `John` ",
+                                    "type": "string"
+                                },
+                                "last_name": {
+                                    "description": "The passenger's last name.  \nExample: `Doe`",
+                                    "type": "string"
+                                },
+                                "birth_date": {
+                                    "description": "The passenger's date of birth in the YYYY-MM-DD format.  \nExample: `1980-05-13`",
+                                    "type": "string"
+                                },
+                                "gender": {
+                                    "description": "The passenger's gender.",
+                                    "type": "string"
+                                },
+                                "email": {
+                                    "description": "The passenger's email address.  \nExample: `johndoe@email.com`",
+                                    "type": "string"
+                                },
+                                "unique_id": {
+                                    "description": "The passenger's passport number, national ID number, or another unique identifier.  \nExample: `AYY12345`",
+                                    "type": "string"
+                                },
+                                "special_needs": {
+                                    "description": "Set to `true` if the passenger reported any special needs.",
+                                    "type": "boolean"
+                                },
+                                "main_passenger": {
+                                    "description": "Set to `true` if the the passenger is the trip's main passenger.",
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    },
+                    "min_age": {
+                        "description": "The minimum allowed age of passengers.  \nExample: `21`",
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "max_age": {
+                        "description": "The maximum allowed age of passengers.  \nExample: `60`",
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "services": {
+                        "description": "The services included in the trip.",
+                        "type": "object",
+                        "properties": {
+                            "travel_insurance": {
+                                "description": "Set to `true` if the reservation covers insurance.",
+                                "type": "boolean"
+                            },
+                            "hotel": {
+                                "description": "Set to `true` if the reservation covers hotel booking.",
+                                "type": "boolean"
+                            },
+                            "flight": {
+                                "description": "Set to `true` the reservation includes the flight booking.",
+                                "type": "boolean"
+                            },
+                            "cancellation_service": {
+                                "description": "Set to `true` if the reservation includes cancellation.",
+                                "type": "boolean"
+                            },
+                            "shared_room": {
+                                "description": "Set to `true` if the passengers agree on sharing rooms.",
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "affiliate_name": {
+                        "description": "The name of the referring partner. If there's no referring partner, leave blank.  \nExample: `WEROAD`",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "car_rental_reservation_details": {
+            "description": "Information about car rentals and drivers.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "pnr": {
+                        "description": "The passenger name record (PNR).  \nExample: `3411qsxqed23123`",
+                        "type": "string"
+                    },
+                    "car_rental_itinerary": {
+                        "description": "The car rental itinerary data",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "rental_company": {
+                                    "description": "The name of a car rental company.  \nExample: `Hertz`",
+                                    "type": "string"
+                                },
+                                "drivers_id": {
+                                    "description": "The array containing each driver's index passed in the `drivers.id` object.  \nExample:  \n - If there's 1 driver, use `[1]`  \n - If there are 2 drivers, use `[1,2]`",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "pick_up_location": {
+                                    "description": "The address details of the pickup location.",
+                                    "type": "object",
+                                    "properties": {
+                                        "street_address": {
+                                            "description": "The street address of the pickup location.  \nExample: `Aankomstpassage Amsterdam (Schiphol)`",
+                                            "type": "string"
+                                        },
+                                        "postal_code": {
+                                            "description": "The ZIP code of the pickup location.  \nExample: `1118 AA`",
+                                            "type": "string"
+                                        },
+                                        "city": {
+                                            "description": "The city of the pickup location.  \nExample: `Schiphol`",
+                                            "type": "string"
+                                        },
+                                        "country": {
+                                            "description": "The country of the pickup location. The value must be a 2-letter country code in ISO 3166 alpha-2 standard.  \nExample: `NL`",
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "start_time": {
+                                    "description": "The car rental start date and time. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                                },
+                                "drop_off_location": {
+                                    "description": "The address details of the drop-off location.",
+                                    "type": "object",
+                                    "properties": {
+                                        "street_address": {
+                                            "description": "The street address of the pickup location.  \nExample: `Aankomstpassage Amsterdam (Schiphol)`",
+                                            "type": "string"
+                                        },
+                                        "postal_code": {
+                                            "description": "The ZIP code of the pickup location.  \nExample: `1118 AA`",
+                                            "type": "string"
+                                        },
+                                        "city": {
+                                            "description": "The city of the pickup location.  \nExample: `Schiphol`",
+                                            "type": "string"
+                                        },
+                                        "country": {
+                                            "description": "The country of the pickup location. The value must be a 2-letter country code in ISO 3166 alpha-2 standard.  \nExample: `NL`",
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "end_time": {
+                                    "description": "The car rental return date and time. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                                },
+                                "car_price": {
+                                    "description": "The rental price in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:  \n - EUR 100,95 is `10095` in minor units.  \n - SEK 10000 is `1000000` in minor units.  \n - JPY 10000 is `10000` in minor units.",
+                                    "type": "number"
+                                },
+                                "class": {
+                                    "description": "The rental class.  \nExample: `economy`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "insurance": {
+                        "description": "Information about insurance for the car rental.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "insurance_company": {
+                                    "description": "The name of the insurance company.  \nExample: `AON`",
+                                    "type": "string"
+                                },
+                                "insurance_type": {
+                                    "description": "The scope of the insurance coverage. The following lowercase values are accepted:  \n - `cancellation` — Coverage for cancellation of any services during the travel  \n - `travel` — Coverage for incident-related expenses that occur during the travel \n - `cancellation_travel` — Coverage for the cancellation of the whole travel \n - `bankruptcy` — Coverage in case of the car rental company's bankruptcy",
+                                    "type": "string",
+                                    "enum": ["cancellation", "travel", "cancellation_travel", "bankruptcy"]
+                                },
+                                "insurance_price": {
+                                    "description": "The price of insurance in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:   \n - EUR 20 is `2000` in minor units.  \n - SEK 200 is `20000` in minor units.  \n - JPY 10 is `10` in minor units.",
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    },
+                    "drivers": {
+                        "description": "Information about the drivers.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "description": "The driver's index number. The value must be one of those specified in the `car_rental_itinerary.drivers_id` array.",
+                                    "type": "integer"
+                                },
+                                "title": {
+                                    "description": "The title used before the driver's name.  \nThe following lowercase values are accepted:  \n - `mr` —  Mr.  \n - `mrs` — Mrs.  \n - `ms` — Ms.",
+                                    "type": "string",
+                                    "enum": ["mr", "mrs", "ms", ""]
+                                },
+                                "first_name": {
+                                    "description": "The driver's first name.  \nExample: `John`",
+                                    "type": "string"
+                                },
+                                "last_name": {
+                                    "description": "The driver's last name.  \nExample: `Doe`",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "affiliate_name": {
+                        "description": "The name of the referring partner. If there's no referring partner, leave blank.  \nExample: `Hertz`.",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "event": {
+            "description": "Information about events, including venue and ticket details. This package can be used for all types of events, including entertainment and educational events.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "event_name": {
+                        "description": "The name of the event. \nExample: `Lady Gaga, the Chromatica Ball`",
+                        "type": "string"
+                    },
+                    "event_company": {
+                        "description": "The name of the company arranging the event.  \nExample: `Ticketmaster`",
+                        "type": "string"
+                    },
+                    "genre_of_event": {
+                        "description": "The category or type of the event.  \nExample: `Music concert`",
+                        "type": "string"
+                    },
+                    "arena_name": {
+                        "description": "The name of the venue.  \nExample: `Gelredome`",
+                        "type": "string"
+                    },
+                    "arena_location": {
+                        "description": "The location of the venue.",
+                        "name": "Location",
+                        "type": "object",
+                        "properties": {
+                            "street_address": {
+                                "description": "The street address of the venue.  \nExample: `Batavierenweg 25`",
+                                "type": "string"
+                            },
+                            "postal_code": {
+                                "description": "The ZIP code of the venue.  \nExample: `6841 HN`",
+                                "type": "string"
+                            },
+                            "city": {
+                                "description": "The city where the venue is located.  \nExample: `Arnhem`",
+                                "type": "string"
+                            },
+                            "country": {
+                                "description": "The country where the venue is located. The value must be a 2-letter country code in ISO 3166 alpha-2 standard.  \nExample: `NL`",
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "start_time": {
+                        "description": "The event's start date and time. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                    },
+                    "end_time": {
+                        "description": "The event's end date and time. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                    },
+                    "access_controlled_venue": {
+                        "description": "Set to `true` if the tickets are digitally checked upon entry.",
+                        "type": "boolean"
+                    },
+                    "ticket_delivery_method": {
+                        "description": "The way in which the ticket is delivered. The following lowercase values are accepted:  \n - `pick_up` — The ticket is picked up in person.  \n - `email` — The ticket is sent by email.  \n - `post` — The ticket is sent by post.  \n - `phone` — The ticket is sent to a phone number.",
+                        "type": "string",
+                        "enum": ["pick_up", "email", "post", "phone"]
+                    },
+                    "ticket_delivery_recipient": {
+                        "description": "The recipient to whom the ticket is delivered. The value depends on the selected `ticket_delivery_method`:  \n - For `email`, use the recipient's email address. Example: `john.doe@email.com`  \n - For `phone`, use the recipient's phone number.  \n - For `pick_up` and `post`, combine the recipient's first name and last name. Example: `John Doe`",
+                        "type": "string"
+                    },
+                    "affiliate_name": {
+                        "description": "The name of the referring partner. If there's no referring partner, leave blank.  \nExample: `Ticketmaster`",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "voucher": {
+            "description": "Information about purchased vouchers.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "voucher_name": {
+                        "description": "The reference to the goods or services covered by the voucher.  \nExample: `The View from The Shard & Glass of Champagne for Two`",
+                        "type": "string"
+                    },
+                    "voucher_company": {
+                        "description": "The provider of the goods or services covered by the voucher.  \nExample: `The Shard`",
+                        "type": "string"
+                    },
+                    "start_time": {
+                        "description": "The date from which the voucher is valid. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM. ",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                    },
+                    "end_time": {
+                        "description": "The date until which the voucher is valid. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                    },
+                    "affiliate_name": {
+                        "description": "The name of the referring partner. If there's no referring partner, leave blank.  \nExample: `Virgin Experience`",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "marketplace_seller_info": {
+            "description": "Information about merchants selling goods in marketplaces.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "sub_merchant_id": {
+                        "description": "A unique identifier of the selling or delivering merchant.  \nExample: `1234567890qwertyuiopasdfg`",
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "sub_merchant_name": {
+                        "description": "The name of the selling or delivering merchant.  \nExample: `Marketbrick Ltd.`",
+                        "type": "string"
+                    },
+                    "sub_merchant_postal_code": {
+                        "description": "The ZIP code of the selling or delivering merchant.",
+                        "type": "string"
+                    },
+                    "product_category": {
+                        "description": "The name of the general category to which the specific goods belong, according to the selling merchant's categorization.  \nExample: `Computers`",
+                        "type": "string"
+                    },
+                    "product_name": {
+                        "description": "The name of the purchased good.  \nExample: `Acer 5400`",
+                        "type": "string"
+                    },
+                    "account_registration_date": {
+                        "description": "The date of the account's registration on the platform. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "account_last_modified": {
+                        "type": "object",
+                        "properties": {
+                            "password": {
+                                "description": "The date of the account's last modification. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            },
+                            "email": {
+                                "description": "The date of the account's last email change. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            },
+                            "listing": {
+                                "description": "The date of the last change in listing details. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            },
+                            "login": {
+                                "description": "The date of the last login details change. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            },
+                            "address": {
+                                "description": "The date of the account's last physical address change. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            }
+                        }
+                    },
+                    "seller_rating": {
+                        "description": "The seller's current rating according to the marketplace rating scale. Partners have to provide their rating scale upfront before the integration's go-live.  \nExample: `4.5`",
+                        "type": "number"
+                    },
+                    "number_of_trades": {
+                        "description": "The number of trades the sub-merchant completed in the previous 12 months.  \nExample: `23`",
+                        "type": "integer"
+                    },
+                    "digital_download": {
+                        "description": "Set to `true` if the product being sold is a digital product and can be downloaded after the purchase.",
+                        "type": "boolean"
+                    },
+                    "volume_of_trades": {
+                        "description": "The volume of trades the sub-merchant completed in the previous 12 months.  \nExample:  `230`",
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "marketplace_winner_info": {
+            "description": "Information about customers purchasing goods in marketplaces.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "account_registration_date": {
+                        "description": "The date and time of the customer's account registration on the platform. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                    },
+                    "account_last_modified": {
+                        "type": "object",
+                        "properties": {
+                            "password": {
+                                "description": "The date and time of the last password change in the customer's account. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            },
+                            "email": {
+                                "description": "The date and time of the last email address change in the customer's account. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            },
+                            "listing": {
+                                "description": "The date and time of the last change in the customer's listing details. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            },
+                            "login": {
+                                "description": "The date and time of the last change of the customer's login details. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            },
+                            "address": {
+                                "description": "The date and time of the last change of the customer's physical address details. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                            }
+                        }
+                    },
+                    "number_of_trades": {
+                        "description": "The number of trades the winner completed in the last 12 months.  \nExample: `5`",
+                        "type": "integer"
+                    },
+                    "volume_of_trades": {
+                        "description": "The volume of trades the winner completed in the last 12 months.  \nExample: `230`",
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "customer_account_info": {
+            "description": "Information about customers registered in merchant stores.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "unique_account_identifier": {
+                        "description": "The unique identifier of the specific customer account.  \nExample:  `1234567890qwertyuiopasdfg`",
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "app_id": {
+                        "description": "The unique identifier of the user if the same `unique_account_identifier` is used across multiple systems. ",
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "loyalty_level": {
+                        "description": "The customer's loyalty level with the merchant. This property must be mapped to the tiers in a specific loyalty program.  \nExample mapping for a merchant with the Silver, Gold, and Platinum loyalty tiers: \n - `low` — Silver \n - `intermediate` — Gold \n - `high` — Platinum",
+                        "type": "string",
+                        "enum": ["low", "intermediate", "high"]
+                    },
+                    "customer_email": {
+                        "description": "The primary email associated with the merchant account.",
+                        "type": "string"
+                    },
+                    "customer_phone": {
+                        "description": "The primary phone number associated with the merchant account.",
+                        "type": "string"
+                    },
+                    "customer_ranking": {
+                        "description": "The customer's ranking reflecting the behavior in previous transactions.",
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "customer_reviews": {
+                        "description": "The number of reviews registered for the customer.",
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "last_login_time": {
+                        "type": "string",
+                        "example": "2012-11-24T15:00",
+                        "description": "The date and time of the customer's last login to the platform. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM."
+                    },
+                    "account_security": {
+                        "description": "The security settings of the customer's account.",
+                        "type": "object",
+                        "properties": {
+                            "last_verification_method": {
+                                "description": "The type of verification method active for the account.",
+                                "type": "string",
+                                "example": "OTP"
+                            },
+                            "last_verification_time": {
+                                "type": "string",
+                                "example": "2012-11-24T15:00",
+                                "description": "The customer account's last verification time. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM."
+                            },
+                            "device_id": {
+                                "description": "The device ID or fingerprint as tracked by the merchant on their web platform or the app used by the customer.",
+                                "type": "string"
+                            },
+                            "fraud_behavior": {
+                                "description": "Set to `true` if the merchant has seen any fraudulent behavior in the customer's account.",
+                                "type": "boolean"
+                            },
+                            "devices_linked": {
+                                "description": "The number of unique devices on which the account has been used.",
+                                "type": "integer",
+                                "format": "int32"
+                            },
+                            "phone_verified": {
+                                "description": "Set to `true` if the customer's phone number has been verified.",
+                                "type": "boolean"
+                            },
+                            "email_verified": {
+                                "description": "Set to `true` if the customer's email has been verified.",
+                                "type": "boolean"
+                            },
+                            "failed_transactions_attempts": {
+                                "description": "The number of failed transaction attempts by the customer in the last 6 months.",
+                                "type": "integer",
+                                "format": "int32"
+                            }
+                        }
+                    },
+                    "account_registration_date": {
+                        "description": "The customer account's registration date. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                    },
+                    "account_last_modified": {
+                        "description": "The date of the last modification of the customer account. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM. ",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                    }
+                }
+            }
+        },
+        "payment_history_full": {
+            "description": "Detailed information about purchases made by registered customers in a merchant's store.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "unique_account_identifier": {
+                        "description": "A unique identifier of the specific customer account.  \nExample:  `1234567890qwertyuiopasdfg`",
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "payment_option": {
+                        "description": "The payment option used to complete the purchase.  \nThe following values are accepted: ",
+                        "type": "string",
+                        "enum": ["card", "direct banking", "non klarna credit", "sms", "other"]
+                    },
+                    "number_paid_purchases": {
+                        "description": "The total number of successful purchases made by the customer.",
+                        "type": "integer"
+                    },
+                    "total_amount_paid_purchases": {
+                        "description": "The total amount of successful purchases in minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).  \nExample:  \n - EUR 100,10 is `10010` in minor units.  \n - SEK 100 is `10000` in minor units.  \n - JPY 100 is `100` in minor units.",
+                        "type": "number"
+                    },
+                    "date_of_last_paid_purchase": {
+                        "description": "The date and time of the last purchase paid by the customer. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                    },
+                    "date_of_first_paid_purchase": {
+                        "description": "The date and time of the first purchase paid by the customer. The following ISO 8601 formats are accepted:  \n - `YYYY-MM-DDThh:mm:ssZ`  \n - `YYYY-MM-DDThh:mm:ss`  \n - `YYYY-MM-DDThh:mmZ`  \n - `YYYY-MM-DDThh:mm` \n\nExample: `2023-11-24T15:00` corresponds to November 24, 2023 3:00 PM.",
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9](:[0-5][0-9]){0,1}Z{0,1}$"
+                    }
+                }
+            }
+        },
+        "payment_history_simple": {
+            "description": "Basic information about customers who made at least 1 purchase in a merchant's store.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "unique_account_identifier": {
+                        "description": "A unique identifier of the specific customer account.  \nExample: `1234567890qwertyuiopasdfg`",
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "paid_before": {
+                        "description": "Set to `true` if the customer has previously completed a payment.",
+                        "type": "boolean"
+                    }
+                }
+            }
+        },
+        "in_store_payment": {
+            "description": "Information about in-store payments.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "store_info": {
+                        "description": "Information about the store where the purchase was completed.",
+                        "type": "object",
+                        "properties": {
+                            "merchant_store_id": {
+                                "description": "A unique identifier of the store specified by the merchant.  \nExample: `LONDON12`",
+                                "type": "string"
+                            },
+                            "store_terminal_id": {
+                                "description": "The identifier of a purchase terminal within the store with multiple terminals.  \nExample: `AD12342D`",
+                                "type": "string"
+                            },
+                            "store_address": {
+                                "description": "The address of the store.",
+                                "type": "object",
+                                "properties": {
+                                    "city": {
+                                        "description": "The city where the store is located.  \nExample: `London`",
+                                        "type": "string"
+                                    },
+                                    "country": {
+                                        "description": "The country where the store is located. The value must be a 2-letter country code in ISO 3166 alpha-2 standard.  \nExample: `GB`",
+                                        "type": "string"
+                                    },
+                                    "postal_code": {
+                                        "description": "The store's ZIP code.  \nExample: `W1B 1JA`",
+                                        "type": "string"
+                                    },
+                                    "street_address": {
+                                        "description": "The store's street and number.  \nExample: `New Burlington St 10`",
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "customer_tokens": {
+            "description": "Information about [customer tokens](https://docs.klarna.com/klarna-payments/in-depth-knowledge/customer-token/) used for subscription charges.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "avg_order_value": {
+                        "description": "The price of subscription service in non-negative minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).",
+                        "type": "integer"
+                    },
+                    "avg_purchase_frequency_count": {
+                        "description": "The number of subscription charges per interval specified in `avg_purchase_frequency_interval`. This information isn't required if you're sharing the `subscription` object on the order-line level when creating a payment session.",
+                        "type": "integer"
+                    },
+                    "avg_purchase_frequency_interval": {
+                        "description": "The cadence unit for the subscription. This information isn't required if you're sharing the `subscription` object on the order-line level when creating a payment session.  \nThe following values are accepted:  \n - `day` \n - `week`  \n - `month`  \n - `year`",
+                        "type": "string",
+                        "enum": ["day", "week", "month", "year"]
+                    },
+                    "min_order_value": {
+                        "description": "If the subscription can be modified, the lowest value offering in non-negative minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).",
+                        "type": "integer"
+                    },
+                    "max_order_value": {
+                        "description": "If the subscription can be modified, the highest value offering in non-negative minor units of the [purchase currency](https://docs.klarna.com/api/payments/#operation/createOrder!path=purchase_currency&t=request).",
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "other_delivery_address": {
+            "description": "Information about alternative non-residential delivery addresses, for example, store or pick-up points.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "shipping_method": {
+                        "description": "The shipping method selected for the shipment.  \nThe following values are accepted:  \n- `store pick-up` — Delivery to a store  \n- `pick-up point` — Delivery to a pick-up point  \n- `registered box` — Delivery to a registered post box \n- `unregistered box` — Delivery to an unregistered post box",
+                        "type": "string",
+                        "enum": ["store pick-up", "pick-up point", "registered box", "unregistered box"]
+                    },
+                    "shipping_type": {
+                        "description": "The type of used shipping service.  \n  The following values are accepted:  \n - `normal` — Standard shipping service \n - `express` — Express or expedited shipping service",
+                        "type": "string",
+                        "enum": ["normal", "express"]
+                    },
+                    "first_name": {
+                        "description": "The recipient's first name specified for the selected shipping method.  \nExample: `John`",
+                        "type": "string"
+                    },
+                    "last_name": {
+                        "description": "The recipient's last name specified for the selected shipping method.  \nExample: `Doe`",
+                        "type": "string"
+                    },
+                    "street_address": {
+                        "description": "The recipient's street address specified for the selected shipping method.  \nExample: `Rue la fayette`",
+                        "type": "string"
+                    },
+                    "street_number": {
+                        "description": "The recipient's street number specified for the selected shipping method.  \nExample: `40`",
+                        "type": "string"
+                    },
+                    "postal_code": {
+                        "description": "The recipient's ZIP code specified for the selected shipping method.  \nExample: `75009`",
+                        "type": "string"
+                    },
+                    "city": {
+                        "description": "The recipient's city specified for the selected shipping method.  \nExample: `Paris`",
+                        "type": "string"
+                    },
+                    "country": {
+                        "description": "The recipient's country specified for the selected shipping method. The value must be a 2-letter country code in ISO 3166 alpha-2 standard.  \nExample: `FR`",
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+  }
+  
+  
