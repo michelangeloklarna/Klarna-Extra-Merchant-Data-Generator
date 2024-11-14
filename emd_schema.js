@@ -163,7 +163,25 @@ function createFormForObject(schema) {
     for (const [key, prop] of Object.entries(schema.properties)) {
         if (prop.type === 'array') {
             // Create nested array fields
-            const arrayContainer = createArrayFields(key, prop.items);
+            const arrayContainer = document.createElement('div');
+            arrayContainer.className = 'nested-array';
+            
+            const arrayLabel = document.createElement('label');
+            arrayLabel.className = 'form-label';
+            arrayLabel.textContent = formatTitle(key);
+            
+            const itemsContainer = document.createElement('div');
+            itemsContainer.className = 'array-items';
+            itemsContainer.dataset.arrayKey = key;
+
+            const addButton = document.createElement('button');
+            addButton.className = 'add-btn';
+            addButton.textContent = `Add ${formatTitle(key.replace(/s$/, ''))}`;
+            addButton.onclick = () => addArrayItem(itemsContainer, prop.items);
+
+            arrayContainer.appendChild(arrayLabel);
+            arrayContainer.appendChild(addButton);
+            arrayContainer.appendChild(itemsContainer);
             form.appendChild(arrayContainer);
         } else if (prop.type === 'object') {
             // Create nested object fields
@@ -178,7 +196,6 @@ function createFormForObject(schema) {
             objectContainer.appendChild(createFormForObject(prop));
             form.appendChild(objectContainer);
         } else {
-            // Create regular field
             form.appendChild(createField(key, prop));
         }
     }
@@ -415,18 +432,18 @@ function generateEMD() {
         const sectionKey = section.querySelector('.section-header').textContent
             .toLowerCase()
             .replace(/ /g, '_')
-            .replace(/_details$/, '');
+            .replace(/_details$/, '')
+            .replace(/\s+/g, '_');
             
         const items = [];
         
         // Get all array items in this section
-        section.querySelectorAll('.array-item').forEach(item => {
+        section.querySelectorAll('> .section-content > .array-container > .array-items > .array-item').forEach(item => {
             const itemData = {};
             
-            // Collect all input and select values
-            item.querySelectorAll('input, select').forEach(input => {
+            // Collect main level fields
+            item.querySelectorAll('> .form-container > .form-group > input, > .form-container > .form-group > select').forEach(input => {
                 if (input.value) {
-                    // Handle different input types
                     if (input.type === 'number') {
                         itemData[input.name] = Number(input.value);
                     } else if (input.type === 'select-one' && input.value === 'true') {
@@ -439,21 +456,51 @@ function generateEMD() {
                 }
             });
             
-            // Only add non-empty objects
+            // Process nested arrays (like insurance, drivers, etc.)
+            item.querySelectorAll('> .form-container > .nested-array').forEach(nestedArray => {
+                const arrayKey = nestedArray.querySelector('.form-label').textContent
+                    .toLowerCase()
+                    .replace(/ /g, '_');
+                const nestedItems = [];
+                
+                nestedArray.querySelectorAll('.array-item').forEach(nestedItem => {
+                    const nestedData = {};
+                    nestedItem.querySelectorAll('input, select').forEach(input => {
+                        if (input.value) {
+                            const key = input.name || input.id;
+                            if (input.type === 'number') {
+                                nestedData[key] = Number(input.value);
+                            } else if (input.type === 'select-one' && input.value === 'true') {
+                                nestedData[key] = true;
+                            } else if (input.type === 'select-one' && input.value === 'false') {
+                                nestedData[key] = false;
+                            } else {
+                                nestedData[key] = input.value;
+                            }
+                        }
+                    });
+                    if (Object.keys(nestedData).length > 0) {
+                        nestedItems.push(nestedData);
+                    }
+                });
+                
+                if (nestedItems.length > 0) {
+                    itemData[arrayKey] = nestedItems;
+                }
+            });
+            
             if (Object.keys(itemData).length > 0) {
                 items.push(itemData);
             }
         });
         
-        // Only add non-empty arrays
         if (items.length > 0) {
             output[sectionKey] = items;
         }
     });
     
-    // Update output box with formatted JSON
-    const outputElement = document.getElementById('output');
-    outputElement.textContent = JSON.stringify(output, null, 2);
+    // Format and display the output
+    document.getElementById('output').textContent = JSON.stringify(output, null, 2);
 }
 
 // Initialize the schema when the page loads
