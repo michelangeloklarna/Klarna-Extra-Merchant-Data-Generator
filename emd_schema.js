@@ -428,39 +428,62 @@ function generateEMD() {
     // Get all sections
     const sections = document.querySelectorAll('.section');
     
+    // Map for special section key handling
+    const sectionKeyMap = {
+        'air': 'air_reservation_details',
+        'hotel': 'hotel_reservation_details',
+        'train': 'train_reservation_details',
+        'ferry': 'ferry_reservation_details',
+        'bus': 'bus_reservation_details',
+        'car rental': 'car_rental_reservation_details',
+        'event': 'event',
+        'voucher': 'voucher',
+        'marketplace seller': 'marketplace_seller_info',
+        'marketplace winner': 'marketplace_winner_info',
+        'customer account': 'customer_account_info',
+        'payment history full': 'payment_history_full',
+        'payment history simple': 'payment_history_simple',
+        'in store payment': 'in_store_payment',
+        'customer tokens': 'customer_tokens',
+        'other delivery address': 'other_delivery_address',
+        'trip': 'trip_reservation_details'
+    };
+    
     sections.forEach(section => {
-        const sectionKey = section.querySelector('.section-header').textContent
+        let sectionKey = section.querySelector('.section-header').textContent
             .toLowerCase()
-            .replace(/ /g, '_')
-            .replace(/_details$/, '')
-            .replace(/\s+/g, '_');
+            .replace(/ details/g, '')
+            .replace(/reservation/g, '')
+            .replace(/\s+/g, '_')
+            .trim();
             
         const items = [];
         
         // Get all array items in this section
-        section.querySelectorAll('> .section-content > .array-container > .array-items > .array-item').forEach(item => {
+        section.querySelectorAll('.array-item').forEach(item => {
             const itemData = {};
             
             // Collect main level fields
-            item.querySelectorAll('> .form-container > .form-group > input, > .form-container > .form-group > select').forEach(input => {
+            item.querySelectorAll('input, select').forEach(input => {
                 if (input.value) {
+                    const key = input.name || input.id;
                     if (input.type === 'number') {
-                        itemData[input.name] = Number(input.value);
+                        itemData[key] = Number(input.value);
                     } else if (input.type === 'select-one' && input.value === 'true') {
-                        itemData[input.name] = true;
+                        itemData[key] = true;
                     } else if (input.type === 'select-one' && input.value === 'false') {
-                        itemData[input.name] = false;
+                        itemData[key] = false;
                     } else {
-                        itemData[input.name] = input.value;
+                        itemData[key] = input.value;
                     }
                 }
             });
             
-            // Process nested arrays (like insurance, drivers, etc.)
-            item.querySelectorAll('> .form-container > .nested-array').forEach(nestedArray => {
+            // Process nested arrays
+            item.querySelectorAll('.nested-array').forEach(nestedArray => {
                 const arrayKey = nestedArray.querySelector('.form-label').textContent
                     .toLowerCase()
-                    .replace(/ /g, '_');
+                    .replace(/\s+/g, '_');
                 const nestedItems = [];
                 
                 nestedArray.querySelectorAll('.array-item').forEach(nestedItem => {
@@ -495,7 +518,9 @@ function generateEMD() {
         });
         
         if (items.length > 0) {
-            output[sectionKey] = items;
+            // Use the mapping to get the correct output key
+            const outputKey = sectionKeyMap[sectionKey] || `${sectionKey}_details`;
+            output[outputKey] = items;
         }
     });
     
