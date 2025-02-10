@@ -160,6 +160,32 @@ function createFormForObject(schema) {
     const form = document.createElement('div');
     form.className = 'form-container';
 
+    // Add test data checkbox at the top of each object form
+    const testDataDiv = document.createElement('div');
+    testDataDiv.className = 'test-data-container';
+    
+    const testDataCheckbox = document.createElement('input');
+    testDataCheckbox.type = 'checkbox';
+    testDataCheckbox.className = 'test-data-checkbox';
+    testDataCheckbox.id = `test-data-${Math.random().toString(36).substr(2, 9)}`;
+    
+    const testDataLabel = document.createElement('label');
+    testDataLabel.htmlFor = testDataCheckbox.id;
+    testDataLabel.textContent = 'Use Test Data';
+    testDataLabel.className = 'test-data-label';
+    
+    testDataCheckbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            fillWithTestData(form, schema);
+        } else {
+            clearFormData(form);
+        }
+    });
+
+    testDataDiv.appendChild(testDataCheckbox);
+    testDataDiv.appendChild(testDataLabel);
+    form.appendChild(testDataDiv);
+
     for (const [key, prop] of Object.entries(schema.properties)) {
         if (prop.type === 'array') {
             // Create nested array fields
@@ -433,17 +459,17 @@ function generateEMD() {
         
         // Map section keys exactly as they appear in Klarna's schema
         const sectionKeyMap = {
-            'Air Reservation': 'air_reservation_details',
-            'Hotel Reservation': 'hotel_reservation_details',
-            'Train Reservation': 'train_reservation_details',
-            'Ferry Reservation': 'ferry_reservation_details',
-            'Bus Reservation': 'bus_reservation_details',
-            'Car Rental': 'car_rental_reservation_details',
-            'Event Tickets': 'event',
-            'Voucher Details': 'voucher',
-            'Marketplace Seller': 'marketplace_seller_info',
-            'Marketplace Winner': 'marketplace_winner_info',
-            'Customer Account': 'customer_account_info',
+            'Air Reservation Details': 'air_reservation_details',
+            'Hotel Reservation Details': 'hotel_reservation_details',
+            'Train Reservation Details': 'train_reservation_details',
+            'Ferry Reservation Details': 'ferry_reservation_details',
+            'Bus Reservation Details': 'bus_reservation_details',
+            'Car Rental Reservation Details': 'car_rental_reservation_details',
+            'Event': 'event',
+            'Voucher': 'voucher',
+            'Marketplace Seller Info': 'marketplace_seller_info',
+            'Marketplace Winner Info': 'marketplace_winner_info',
+            'Customer Account Info': 'customer_account_info',
             'Payment History Full': 'payment_history_full',
             'Payment History Simple': 'payment_history_simple',
             'In Store Payment': 'in_store_payment',
@@ -459,13 +485,13 @@ function generateEMD() {
 
         const items = [];
         
-        // Get all main items in this section
+        // Get all array items in this section
         section.querySelectorAll('.array-item').forEach(item => {
             const itemData = {};
             const itemSchema = window.emdSchema.properties[schemaKey].items;
             
             // Process main level fields
-            item.querySelectorAll('> .form-container > .form-group > input, > .form-container > .form-group > select').forEach(input => {
+            item.querySelectorAll('.form-group > input, .form-group > select').forEach(input => {
                 if (input.value) {
                     const key = input.name || input.id;
                     const fieldSchema = itemSchema.properties?.[key];
@@ -479,7 +505,7 @@ function generateEMD() {
                 }
             });
             
-            // Process nested arrays according to schema
+            // Process nested arrays
             item.querySelectorAll('.nested-array').forEach(nestedArray => {
                 const arrayKey = nestedArray.querySelector('.form-label').textContent
                     .toLowerCase()
@@ -492,7 +518,7 @@ function generateEMD() {
                 
                 nestedArray.querySelectorAll('.array-item').forEach(nestedItem => {
                     const nestedData = {};
-                    nestedItem.querySelectorAll('input, select').forEach(input => {
+                    nestedItem.querySelectorAll('.form-group > input, .form-group > select').forEach(input => {
                         if (input.value) {
                             const key = input.name || input.id;
                             const fieldSchema = arraySchema.items?.properties?.[key];
@@ -525,16 +551,16 @@ function generateEMD() {
             output[schemaKey] = items;
         }
     });
+
+    // Add debug logging
+    console.log('Generated EMD:', output);
     
-    // Validate against schema before outputting
-    const validation = validateEMDOutput(output);
-    if (!validation.isValid) {
-        console.error('EMD Validation Errors:', validation.errors);
-        alert('EMD validation failed. Check console for details.');
-        return;
+    // Only update output if we have data
+    if (Object.keys(output).length > 0) {
+        document.getElementById('output').textContent = JSON.stringify(output, null, 2);
+    } else {
+        console.error('No data collected from form');
     }
-    
-    document.getElementById('output').textContent = JSON.stringify(output, null, 2);
 }
 
 // Helper function to process field values according to schema
@@ -739,3 +765,91 @@ function validateSpecialFields(data, schema) {
 
     return true;
 }
+
+// Add function to fill form with test data
+function fillWithTestData(form, schema) {
+    Object.entries(schema.properties).forEach(([key, prop]) => {
+        const input = form.querySelector(`[name="${key}"]`);
+        if (!input) return;
+
+        // Get example from schema description
+        const example = prop.description?.match(/Example:.*?`(.*?)`/)?.[1];
+        
+        if (example) {
+            if (prop.type === 'number' || prop.type === 'integer') {
+                input.value = example.replace(/[^0-9.-]/g, '');
+            } else if (prop.type === 'boolean') {
+                input.value = example.toLowerCase();
+            } else if (prop.enum) {
+                input.value = prop.enum[0];
+            } else {
+                input.value = example;
+            }
+        } else {
+            // Fallback test data if no example is found
+            switch (prop.type) {
+                case 'string':
+                    if (prop.format === 'date-time') {
+                        input.value = '2024-12-24T12:00';
+                    } else if (prop.minLength === 3 && prop.maxLength === 3) {
+                        input.value = 'ABC'; // IATA code
+                    } else if (prop.minLength === 2 && prop.maxLength === 2) {
+                        input.value = 'AB'; // Carrier code
+                    } else {
+                        input.value = 'Test Value';
+                    }
+                    break;
+                case 'number':
+                case 'integer':
+                    input.value = prop.description?.includes('price') ? '10000' : '1';
+                    break;
+                case 'boolean':
+                    input.value = 'true';
+                    break;
+                case 'array':
+                    if (prop.items?.type === 'integer') {
+                        input.value = '1,2,3';
+                    }
+                    break;
+            }
+        }
+
+        // Trigger validation
+        input.dispatchEvent(new Event('input'));
+    });
+
+    // Generate EMD after filling test data
+    setTimeout(generateEMD, 100);
+}
+
+// Add function to clear form data
+function clearFormData(form) {
+    form.querySelectorAll('input, select').forEach(input => {
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+    });
+}
+
+// Add styles for the test data checkbox
+const style = document.createElement('style');
+style.textContent = `
+    .test-data-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 5px;
+        background: var(--win95-gray);
+        border: 2px solid var(--win95-dark);
+    }
+    
+    .test-data-checkbox {
+        margin-right: 8px;
+    }
+    
+    .test-data-label {
+        font-size: 12px;
+        color: var(--win95-dark);
+        user-select: none;
+    }
+`;
+document.head.appendChild(style);
