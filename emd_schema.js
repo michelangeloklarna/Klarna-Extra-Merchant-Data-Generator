@@ -428,62 +428,66 @@ function generateEMD() {
     // Get all sections
     const sections = document.querySelectorAll('.section');
     
-    // Map for special section key handling
-    const sectionKeyMap = {
-        'air': 'air_reservation_details',
-        'hotel': 'hotel_reservation_details',
-        'train': 'train_reservation_details',
-        'ferry': 'ferry_reservation_details',
-        'bus': 'bus_reservation_details',
-        'car rental': 'car_rental_reservation_details',
-        'event': 'event',
-        'voucher': 'voucher',
-        'marketplace seller': 'marketplace_seller_info',
-        'marketplace winner': 'marketplace_winner_info',
-        'customer account': 'customer_account_info',
-        'payment history full': 'payment_history_full',
-        'payment history simple': 'payment_history_simple',
-        'in store payment': 'in_store_payment',
-        'customer tokens': 'customer_tokens',
-        'other delivery address': 'other_delivery_address',
-        'trip': 'trip_reservation_details'
-    };
-    
     sections.forEach(section => {
-        let sectionKey = section.querySelector('.section-header').textContent
-            .toLowerCase()
-            .replace(/ details/g, '')
-            .replace(/reservation/g, '')
-            .replace(/\s+/g, '_')
-            .trim();
-            
+        const sectionHeader = section.querySelector('.section-header').textContent;
+        
+        // Map section keys exactly as they appear in Klarna's schema
+        const sectionKeyMap = {
+            'Air Reservation': 'air_reservation_details',
+            'Hotel Reservation': 'hotel_reservation_details',
+            'Train Reservation': 'train_reservation_details',
+            'Ferry Reservation': 'ferry_reservation_details',
+            'Bus Reservation': 'bus_reservation_details',
+            'Car Rental': 'car_rental_reservation_details',
+            'Event Tickets': 'event',
+            'Voucher Details': 'voucher',
+            'Marketplace Seller': 'marketplace_seller_info',
+            'Marketplace Winner': 'marketplace_winner_info',
+            'Customer Account': 'customer_account_info',
+            'Payment History Full': 'payment_history_full',
+            'Payment History Simple': 'payment_history_simple',
+            'In Store Payment': 'in_store_payment',
+            'Customer Tokens': 'customer_tokens',
+            'Other Delivery Address': 'other_delivery_address'
+        };
+        
+        const schemaKey = sectionKeyMap[sectionHeader];
+        if (!schemaKey || !window.emdSchema.properties[schemaKey]) {
+            console.error(`Invalid section key: ${sectionHeader}`);
+            return;
+        }
+
         const items = [];
         
-        // Get all array items in this section
+        // Get all main items in this section
         section.querySelectorAll('.array-item').forEach(item => {
             const itemData = {};
+            const itemSchema = window.emdSchema.properties[schemaKey].items;
             
-            // Collect main level fields
-            item.querySelectorAll('input, select').forEach(input => {
+            // Process main level fields
+            item.querySelectorAll('> .form-container > .form-group > input, > .form-container > .form-group > select').forEach(input => {
                 if (input.value) {
                     const key = input.name || input.id;
-                    if (input.type === 'number') {
-                        itemData[key] = Number(input.value);
-                    } else if (input.type === 'select-one' && input.value === 'true') {
-                        itemData[key] = true;
-                    } else if (input.type === 'select-one' && input.value === 'false') {
-                        itemData[key] = false;
-                    } else {
-                        itemData[key] = input.value;
+                    const fieldSchema = itemSchema.properties?.[key];
+                    
+                    if (fieldSchema) {
+                        const value = processFieldValue(input.value, fieldSchema);
+                        if (value !== undefined) {
+                            itemData[key] = value;
+                        }
                     }
                 }
             });
             
-            // Process nested arrays
+            // Process nested arrays according to schema
             item.querySelectorAll('.nested-array').forEach(nestedArray => {
                 const arrayKey = nestedArray.querySelector('.form-label').textContent
                     .toLowerCase()
                     .replace(/\s+/g, '_');
+                    
+                const arraySchema = itemSchema.properties?.[arrayKey];
+                if (!arraySchema || arraySchema.type !== 'array') return;
+                
                 const nestedItems = [];
                 
                 nestedArray.querySelectorAll('.array-item').forEach(nestedItem => {
@@ -491,17 +495,17 @@ function generateEMD() {
                     nestedItem.querySelectorAll('input, select').forEach(input => {
                         if (input.value) {
                             const key = input.name || input.id;
-                            if (input.type === 'number') {
-                                nestedData[key] = Number(input.value);
-                            } else if (input.type === 'select-one' && input.value === 'true') {
-                                nestedData[key] = true;
-                            } else if (input.type === 'select-one' && input.value === 'false') {
-                                nestedData[key] = false;
-                            } else {
-                                nestedData[key] = input.value;
+                            const fieldSchema = arraySchema.items?.properties?.[key];
+                            
+                            if (fieldSchema) {
+                                const value = processFieldValue(input.value, fieldSchema);
+                                if (value !== undefined) {
+                                    nestedData[key] = value;
+                                }
                             }
                         }
                     });
+                    
                     if (Object.keys(nestedData).length > 0) {
                         nestedItems.push(nestedData);
                     }
@@ -518,14 +522,72 @@ function generateEMD() {
         });
         
         if (items.length > 0) {
-            // Use the mapping to get the correct output key
-            const outputKey = sectionKeyMap[sectionKey] || `${sectionKey}_details`;
-            output[outputKey] = items;
+            output[schemaKey] = items;
         }
     });
     
-    // Format and display the output
+    // Validate against schema before outputting
+    const validation = validateEMDOutput(output);
+    if (!validation.isValid) {
+        console.error('EMD Validation Errors:', validation.errors);
+        alert('EMD validation failed. Check console for details.');
+        return;
+    }
+    
     document.getElementById('output').textContent = JSON.stringify(output, null, 2);
+}
+
+// Helper function to process field values according to schema
+function processFieldValue(value, schema) {
+    switch (schema.type) {
+        case 'number':
+        case 'integer':
+            const num = Number(value);
+            // Ensure positive numbers for prices and IDs
+            if (schema.description?.includes('price') && num < 0) {
+                return undefined;
+            }
+            if (schema.description?.includes('id') && (!Number.isInteger(num) || num <= 0)) {
+                return undefined;
+            }
+            return !isNaN(num) ? num : undefined;
+            
+        case 'boolean':
+            return value === 'true';
+            
+        case 'array':
+            if (schema.items?.type === 'integer') {
+                const nums = value.split(',')
+                    .map(v => parseInt(v.trim()))
+                    .filter(v => !isNaN(v));
+                // Validate passenger_id array values
+                if (schema.description?.includes('passenger') && 
+                    nums.some(n => n <= 0 || !Number.isInteger(n))) {
+                    return undefined;
+                }
+                return nums;
+            }
+            return undefined;
+            
+        case 'string':
+            if (schema.enum && !schema.enum.includes(value)) {
+                return undefined;
+            }
+            if (schema.pattern && !new RegExp(schema.pattern).test(value)) {
+                return undefined;
+            }
+            // Validate string length
+            if (schema.minLength && value.length < schema.minLength) {
+                return undefined;
+            }
+            if (schema.maxLength && value.length > schema.maxLength) {
+                return undefined;
+            }
+            return value;
+            
+        default:
+            return value;
+    }
 }
 
 // Initialize the schema when the page loads
@@ -629,4 +691,51 @@ function copyGeneratedEMD() {
     } finally {
         document.body.removeChild(textarea);
     }
+}
+
+// Add schema-specific validation for special fields
+function validateSpecialFields(data, schema) {
+    if (!data || !schema) return true;
+
+    for (const [key, value] of Object.entries(data)) {
+        const fieldSchema = schema.properties?.[key];
+        if (!fieldSchema) continue;
+
+        // Validate passenger_id array
+        if (key === 'passenger_id' && Array.isArray(value)) {
+            const invalidIds = value.filter(id => !Number.isInteger(id) || id <= 0);
+            if (invalidIds.length > 0) {
+                console.error('Invalid passenger IDs:', invalidIds);
+                return false;
+            }
+        }
+
+        // Validate date-time format
+        if (fieldSchema.format === 'date-time' && fieldSchema.pattern) {
+            const pattern = new RegExp(fieldSchema.pattern);
+            if (!pattern.test(value)) {
+                console.error(`Invalid date-time format for ${key}:`, value);
+                return false;
+            }
+        }
+
+        // Validate IATA codes
+        if ((key === 'departure' || key === 'arrival') && 
+            fieldSchema.minLength === 3 && fieldSchema.maxLength === 3) {
+            if (!/^[A-Z]{3}$/.test(value)) {
+                console.error(`Invalid IATA code for ${key}:`, value);
+                return false;
+            }
+        }
+
+        // Validate carrier codes
+        if (key === 'carrier' && fieldSchema.minLength === 2 && fieldSchema.maxLength === 2) {
+            if (!/^[A-Z]{2}$/.test(value)) {
+                console.error(`Invalid carrier code:`, value);
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
