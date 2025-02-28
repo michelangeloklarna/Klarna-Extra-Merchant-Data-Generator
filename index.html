@@ -3,12 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-5LQCGN6WNC"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-5LQCGN6WNC');
+    </script>
     <title>Klarna EMD Generator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/win98icons/dist/win98icons.min.css">
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>Klarna Extra Merchant Data Generator</h1>
+        <h1><span class="win98-icon win98-document-file"></span> Klarna Extra Merchant Data Generator</h1>
         
         <!-- Disclaimer box -->
         <div class="disclaimer-box">
@@ -25,8 +35,19 @@
                 1. Fill in the relevant fields in any section (Air Reservation, Hotel, etc.)<br>
                 2. Click "Add" buttons to create new entries in each section<br>
                 3. Click "Generate EMD" to create the EMD JSON structure<br>
-                4. Use "Copy EMD to Clipboard" to copy the formatted JSON<br>
-                5. Use "Serialize EMD" to get the serialized string format
+                4. You can manually edit the generated EMD if needed<br>
+                5. Use "Validate EMD" to check if your edited EMD complies with Klarna's schema<br>
+                6. Use "Copy EMD to Clipboard" to copy the formatted JSON<br>
+                7. Use "Serialize EMD" to get the serialized string format<br>
+                8. Use "Generate EMD KP Ready" to get the EMD in Klarna Payments API format
+                <br><br>
+                <strong>Button Functions:</strong><br>
+                • <strong>Generate EMD</strong> - Creates the EMD JSON structure based on the data you've entered in the form sections. This must be clicked first before other operations.<br>
+                • <strong>Reset to Generated</strong> - Restores the EMD to the last generated version if you've made manual edits to the JSON. This button is disabled until EMD is first generated.<br>
+                • <strong>Validate EMD</strong> - Checks your manually edited EMD against Klarna's schema to verify that it remains valid and compliant with all requirements.<br>
+                • <strong>Copy EMD to Clipboard</strong> - Copies the current EMD JSON to your clipboard so you can paste it elsewhere. The JSON is properly indented for readability.<br>
+                • <strong>Serialize EMD</strong> - Converts the EMD to a single-line, escaped string format suitable for inclusion in API calls or HTML attributes.<br>
+                • <strong>Generate EMD KP Ready</strong> - Formats the EMD in the Klarna Payments API-ready format with attachment object structure.
                 <br><br>
                 <strong>Notes:</strong><br>
                 • All data is validated according to Klarna's specifications<br>
@@ -40,11 +61,15 @@
         <div class="output-section">
             <div>Generated EMD:</div>
             <div class="button-group">
-                <button class="generate-btn" onclick="generateEMD()">Generate EMD</button>
-                <button class="generate-btn" onclick="copyGeneratedEMD()">Copy EMD to Clipboard</button>
-                <button class="generate-btn" onclick="showSerializedEMD()">Serialize EMD</button>
+                <button class="generate-btn" onclick="generateEMD()"><span class="win98-icon win98-lightning"></span> Generate EMD</button>
+                <button class="generate-btn" id="resetEMDBtn" onclick="resetEMD()" disabled><span class="win98-icon win98-restore"></span> Reset to Generated</button>
+                <button class="generate-btn" onclick="validateEMD()"><span class="win98-icon win98-check"></span> Validate EMD</button>
+                <button class="generate-btn" onclick="copyGeneratedEMD()"><span class="win98-icon win98-copy"></span> Copy EMD to Clipboard</button>
+                <button class="generate-btn" onclick="showSerializedEMD()"><span class="win98-icon win98-font"></span> Serialize EMD</button>
+                <button class="generate-btn" onclick="showEMDKPReady()"><span class="win98-icon win98-wrench"></span> Generate EMD KP Ready</button>
             </div>
-            <div id="output" class="output-box"></div>
+            <div id="output" class="output-box" contenteditable="true"></div>
+            <div class="output-note">You can manually edit the EMD above. Use the "Reset to Generated" button to restore the last generated content.</div>
         </div>
     </div>
 
@@ -52,7 +77,7 @@
     <div id="serializePopup" class="popup" style="display: none;">
         <div class="popup-content">
             <div class="popup-header">
-                <span>Serialized EMD</span>
+                <span><span class="win98-icon win98-font"></span> Serialized EMD</span>
                 <button class="close-btn" onclick="closeSerializePopup()">×</button>
             </div>
             <div class="popup-body">
@@ -61,7 +86,25 @@
                 </div>
             </div>
             <div class="popup-footer">
-                <button class="generate-btn" onclick="copySerializedEMD()">Copy to Clipboard</button>
+                <button class="generate-btn" onclick="copySerializedEMD()"><span class="win98-icon win98-copy"></span> Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add KP Ready EMD popup HTML -->
+    <div id="emdKPReadyPopup" class="popup" style="display: none;">
+        <div class="popup-content">
+            <div class="popup-header">
+                <span><span class="win98-icon win98-wrench"></span> EMD KP Ready Format</span>
+                <button class="close-btn" onclick="closeEMDKPReadyPopup()">×</button>
+            </div>
+            <div class="popup-body">
+                <div class="serialized-container">
+                    <code id="emdKPReadyOutput"></code>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button class="generate-btn" onclick="copyEMDKPReady()"><span class="win98-icon win98-copy"></span> Copy to Clipboard</button>
             </div>
         </div>
     </div>

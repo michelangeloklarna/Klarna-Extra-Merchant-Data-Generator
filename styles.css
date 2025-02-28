@@ -5,6 +5,15 @@
     --win95-white: #ffffff;
     --win95-dark: #808080;
     --win95-darker: #404040;
+    --win95-highlight: #ffffff;
+    --win95-shadow: #404040;
+    --win95-title-active: #000080;
+    --win95-title-inactive: #808080;
+}
+
+@font-face {
+    font-family: 'MS Sans Serif';
+    src: url('https://unpkg.com/win98icons/fonts/ms-sans-serif.woff2') format('woff2');
 }
 
 body {
@@ -12,10 +21,12 @@ body {
     font-family: 'MS Sans Serif', Arial, sans-serif;
     margin: 0;
     padding: 16px;
+    font-size: 12px;
 }
 
 .container {
-    border: 2px solid var(--win95-dark);
+    border: 3px solid;
+    border-color: var(--win95-highlight) var(--win95-shadow) var(--win95-shadow) var(--win95-highlight);
     background-color: var(--win95-gray);
     min-height: calc(100vh - 32px);
     position: relative;
@@ -31,6 +42,8 @@ h1 {
     padding: 2px 4px;
     font-size: 1rem;
     font-weight: normal;
+    display: flex;
+    align-items: center;
 }
 
 .section-header {
@@ -38,6 +51,13 @@ h1 {
     color: var(--win95-white);
     padding: 2px 4px;
     margin-top: 2px;
+    display: flex;
+    align-items: center;
+}
+
+.win98-icon {
+    margin-right: 4px;
+    font-size: 14px;
 }
 
 .section-content {
@@ -56,10 +76,11 @@ h1 {
 .form-control {
     width: 100%;
     padding: 2px 4px;
-    border: 2px inset var(--win95-dark);
+    border: 2px solid;
+    border-color: var(--win95-shadow) var(--win95-highlight) var(--win95-highlight) var(--win95-shadow);
     background-color: var(--win95-white);
     font-family: 'MS Sans Serif', Arial, sans-serif;
-    font-size: 1rem;
+    font-size: 11px;
     box-sizing: border-box;
 }
 
@@ -78,28 +99,46 @@ h1 {
 }
 
 .generate-btn {
-    background-color: var(--win95-blue);
-    color: var(--win95-white);
-    border: 2px outset var(--win95-dark);
-    padding: 2px 8px;
+    background-color: var(--win95-gray);
+    color: #000;
+    border: 2px solid;
+    border-color: var(--win95-highlight) var(--win95-shadow) var(--win95-shadow) var(--win95-highlight);
+    padding: 4px 8px;
     margin: 4px 0;
     cursor: pointer;
     font-family: 'MS Sans Serif', Arial, sans-serif;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    line-height: 1;
 }
 
 .generate-btn:active {
-    border-style: inset;
+    border-color: var(--win95-shadow) var(--win95-highlight) var(--win95-highlight) var(--win95-shadow);
+    padding-top: 5px;
+    padding-left: 9px;
+    padding-bottom: 3px;
+    padding-right: 7px;
 }
 
 .output-box {
     max-height: 150px;
     overflow-y: auto;
     background-color: var(--win95-white);
-    border: 2px inset var(--win95-dark);
+    border: 2px solid;
+    border-color: var(--win95-shadow) var(--win95-highlight) var(--win95-highlight) var(--win95-shadow);
     padding: 8px;
     margin-top: 4px;
-    font-family: monospace;
+    font-family: 'Courier New', monospace;
     white-space: pre;
+}
+
+.output-note {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 5px;
+    font-style: italic;
 }
 
 /* Add to your existing CSS */
@@ -122,14 +161,26 @@ h1 {
 
 .add-btn {
     background-color: var(--win95-gray);
-    border: 2px outset var(--win95-dark);
+    border: 2px solid;
+    border-color: var(--win95-highlight) var(--win95-shadow) var(--win95-shadow) var(--win95-highlight);
     padding: 2px 8px;
     cursor: pointer;
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+    font-size: 11px;
+}
+
+.add-btn:active {
+    border-color: var(--win95-shadow) var(--win95-highlight) var(--win95-highlight) var(--win95-shadow);
+    padding-top: 3px;
+    padding-left: 9px;
+    padding-bottom: 1px;
+    padding-right: 7px;
 }
 
 .remove-btn {
     background-color: var(--win95-gray);
-    border: 2px outset var(--win95-dark);
+    border: 2px solid;
+    border-color: var(--win95-highlight) var(--win95-shadow) var(--win95-shadow) var(--win95-highlight);
     width: 16px;
     height: 14px;
     line-height: 8px;
@@ -148,14 +199,9 @@ h1 {
 }
 
 .remove-btn:active {
-    border-style: inset;
+    border-color: var(--win95-shadow) var(--win95-highlight) var(--win95-highlight) var(--win95-shadow);
     padding-top: 1px;
     padding-left: 1px;
-}
-
-.add-btn:active,
-.remove-btn:active {
-    border-style: inset;
 }
 
 /* Add to existing CSS */
@@ -329,14 +375,14 @@ h1 {
 
 .popup-content {
     background: var(--win95-gray);
-    border: 2px solid var(--win95-dark);
-    border-top-color: var(--win95-highlight);
-    border-left-color: var(--win95-highlight);
+    border: 3px solid;
+    border-color: var(--win95-highlight) var(--win95-shadow) var(--win95-shadow) var(--win95-highlight);
     width: auto;
     min-width: 300px;
     max-width: 800px;
     display: flex;
     flex-direction: column;
+    box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.3);
 }
 
 .popup-header {
@@ -349,8 +395,9 @@ h1 {
 }
 
 .close-btn {
-    background: var(--win95-gray);
-    border: 2px outset var(--win95-dark);
+    background-color: var(--win95-gray);
+    border: 2px solid;
+    border-color: var(--win95-highlight) var(--win95-shadow) var(--win95-shadow) var(--win95-highlight);
     width: 16px;
     height: 14px;
     line-height: 8px;
@@ -365,7 +412,7 @@ h1 {
 }
 
 .close-btn:active {
-    border-style: inset;
+    border-color: var(--win95-shadow) var(--win95-highlight) var(--win95-highlight) var(--win95-shadow);
     padding-top: 1px;
     padding-left: 1px;
 }
@@ -379,9 +426,10 @@ h1 {
 
 .serialized-container {
     background: var(--win95-white);
-    border: 2px inset var(--win95-dark);
+    border: 2px solid;
+    border-color: var(--win95-shadow) var(--win95-highlight) var(--win95-highlight) var(--win95-shadow);
     padding: 8px;
-    font-family: monospace;
+    font-family: 'Courier New', monospace;
     white-space: pre;
     overflow-x: auto;
     text-align: left;
@@ -441,4 +489,65 @@ h1 {
     white-space: pre;
     overflow-x: auto;
     text-align: left;
+}
+
+/* Button info styles */
+.button-info-container {
+    padding: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.button-info-list {
+    margin: 0;
+    padding: 0;
+}
+
+.button-info-list dt {
+    font-weight: bold;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    color: var(--win95-blue);
+}
+
+.button-info-list dd {
+    margin-left: 12px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.button-info-container h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 1rem;
+    border-bottom: 1px solid var(--win95-dark);
+    padding-bottom: 4px;
+}
+
+/* Windows 95 style scrollbars */
+::-webkit-scrollbar {
+    width: 16px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--win95-gray);
+    border-left: 1px solid var(--win95-shadow);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--win95-gray);
+    border: 2px solid;
+    border-color: var(--win95-highlight) var(--win95-shadow) var(--win95-shadow) var(--win95-highlight);
+}
+
+::-webkit-scrollbar-button:single-button {
+    background: var(--win95-gray);
+    display: block;
+    border: 2px solid;
+    border-color: var(--win95-highlight) var(--win95-shadow) var(--win95-shadow) var(--win95-highlight);
+    height: 16px;
+}
+
+::-webkit-scrollbar-button:single-button:active {
+    border-color: var(--win95-shadow) var(--win95-highlight) var(--win95-highlight) var(--win95-shadow);
 }

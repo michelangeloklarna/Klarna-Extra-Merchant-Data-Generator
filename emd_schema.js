@@ -53,7 +53,36 @@ function createSection(key, schema) {
     
     const header = document.createElement('div');
     header.className = 'section-header';
-    header.textContent = formatTitle(key);
+    
+    // Add appropriate Windows 95 icon based on section type
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'win98-icon';
+    
+    // Choose appropriate icon based on key
+    if (key.includes('air') || key.includes('flight')) {
+        iconSpan.classList.add('win98-plane');
+    } else if (key.includes('hotel')) {
+        iconSpan.classList.add('win98-building');
+    } else if (key.includes('train')) {
+        iconSpan.classList.add('win98-sync');
+    } else if (key.includes('car')) {
+        iconSpan.classList.add('win98-properties');
+    } else if (key.includes('event')) {
+        iconSpan.classList.add('win98-calendar');
+    } else if (key.includes('marketplace')) {
+        iconSpan.classList.add('win98-shopping-cart');
+    } else if (key.includes('payment')) {
+        iconSpan.classList.add('win98-dollar');
+    } else if (key.includes('customer')) {
+        iconSpan.classList.add('win98-user');
+    } else if (key.includes('voucher')) {
+        iconSpan.classList.add('win98-file-text');
+    } else {
+        iconSpan.classList.add('win98-document-file');
+    }
+    
+    header.appendChild(iconSpan);
+    header.appendChild(document.createTextNode(' ' + formatTitle(key)));
     
     const content = document.createElement('div');
     content.className = 'section-content';
@@ -447,6 +476,9 @@ function formatTitle(key) {
         .join(' ');
 }
 
+// Variable to store the last generated EMD
+let lastGeneratedEMD = null;
+
 // Add this function to handle EMD generation
 function generateEMD() {
     const output = {};
@@ -557,9 +589,21 @@ function generateEMD() {
     
     // Only update output if we have data
     if (Object.keys(output).length > 0) {
-        document.getElementById('output').textContent = JSON.stringify(output, null, 2);
+        const formattedOutput = JSON.stringify(output, null, 2);
+        document.getElementById('output').textContent = formattedOutput;
+        
+        // Store the generated EMD and enable the reset button
+        lastGeneratedEMD = formattedOutput;
+        document.getElementById('resetEMDBtn').disabled = false;
     } else {
         console.error('No data collected from form');
+    }
+}
+
+// Function to reset the EMD to the last generated version
+function resetEMD() {
+    if (lastGeneratedEMD) {
+        document.getElementById('output').textContent = lastGeneratedEMD;
     }
 }
 
@@ -631,26 +675,22 @@ function showSerializedEMD() {
         alert('Please generate EMD first');
         return;
     }
-
+    
     try {
         // Parse the current EMD output and then stringify it to create a serialized string
         const emdData = JSON.parse(output);
-        // Double stringify to create a JSON string that can be used as a string value
-        const serialized = JSON.stringify(JSON.stringify(emdData));
         
-        // Remove the outer quotes that double stringify adds
-        const finalSerialized = serialized.slice(1, -1);
+        // Create a serialized version (single line, no whitespace)
+        const serialized = JSON.stringify(emdData);
         
-        // Show the serialized string in the popup
+        // Add escaping for quotes to make it compatible with HTML attributes
+        const finalSerialized = serialized.replace(/"/g, '\\"');
+        
+        document.getElementById('serializePopup').style.display = 'block';
         const serializedOutput = document.getElementById('serializedOutput');
         serializedOutput.textContent = finalSerialized;
-        
-        // Show the popup
-        const popup = document.getElementById('serializePopup');
-        popup.style.display = 'block';
     } catch (error) {
-        console.error('Error serializing EMD:', error);
-        alert('Error serializing EMD data');
+        alert('Error serializing EMD: ' + error.message + '\n\nPlease check for syntax errors in your edited EMD.');
     }
 }
 
@@ -689,23 +729,61 @@ function copySerializedEMD() {
     }
 }
 
-// Add this function to copy the generated EMD
-function copyGeneratedEMD() {
-    const output = document.getElementById('output');
-    if (!output.textContent) {
+// Function to show EMD in Klarna Payments ready format
+function showEMDKPReady() {
+    const output = document.getElementById('output').textContent;
+    if (!output) {
         alert('Please generate EMD first');
         return;
     }
     
+    try {
+        // Parse the current EMD output
+        const emdData = JSON.parse(output);
+        
+        // Create a serialized version (single line, no whitespace)
+        const serialized = JSON.stringify(emdData);
+        
+        // Create the KP ready format
+        const kpReadyFormat = {
+            "attachment": {
+                "content_type": "application/vnd.klarna.internal.emd-v2+json",
+                "body": serialized
+            }
+        };
+        
+        // Format the KP ready JSON with indentation
+        const formattedKPReady = JSON.stringify(kpReadyFormat, null, 2);
+        
+        // Show the popup and populate it
+        document.getElementById('emdKPReadyPopup').style.display = 'block';
+        const kpReadyOutput = document.getElementById('emdKPReadyOutput');
+        kpReadyOutput.textContent = formattedKPReady;
+    } catch (error) {
+        alert('Error generating KP Ready EMD: ' + error.message + '\n\nPlease check for syntax errors in your edited EMD.');
+    }
+}
+
+function closeEMDKPReadyPopup() {
+    document.getElementById('emdKPReadyPopup').style.display = 'none';
+}
+
+function copyEMDKPReady() {
+    const kpReadyOutput = document.getElementById('emdKPReadyOutput');
+    const textToCopy = kpReadyOutput.textContent;
+    
+    // Create a temporary textarea element
     const textarea = document.createElement('textarea');
-    textarea.value = output.textContent;
+    textarea.value = textToCopy;
     document.body.appendChild(textarea);
     
     try {
+        // Select and copy the text
         textarea.select();
         document.execCommand('copy');
         
-        const copyBtn = document.querySelector('.output-section .generate-btn:last-child');
+        // Show feedback
+        const copyBtn = document.querySelector('#emdKPReadyPopup .popup-footer .generate-btn');
         const originalText = copyBtn.textContent;
         copyBtn.textContent = 'Copied!';
         setTimeout(() => {
@@ -715,7 +793,40 @@ function copyGeneratedEMD() {
         console.error('Failed to copy text: ', err);
         alert('Failed to copy to clipboard');
     } finally {
+        // Clean up
         document.body.removeChild(textarea);
+    }
+}
+
+// Add this function to copy the generated EMD
+function copyGeneratedEMD() {
+    const output = document.getElementById('output');
+    if (!output.textContent) {
+        alert('Please generate EMD first');
+        return;
+    }
+    
+    try {
+        // Validate that the content is valid JSON first
+        JSON.parse(output.textContent);
+        
+        // Use a temporary textarea element for copy
+        const textarea = document.createElement('textarea');
+        textarea.value = output.textContent;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        
+        // Change the button text temporarily
+        const copyBtn = document.querySelector('.output-section .generate-btn:nth-child(4)');
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+        }, 2000);
+    } catch (error) {
+        alert('Error copying EMD: ' + error.message + '\n\nPlease check for syntax errors in your edited EMD.');
     }
 }
 
@@ -853,3 +964,192 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Function to validate the EMD against the schema
+function validateEMD() {
+    const output = document.getElementById('output');
+    if (!output.textContent.trim()) {
+        alert('Please generate or enter EMD first');
+        return;
+    }
+    
+    try {
+        // Parse the current EMD output
+        const emdData = JSON.parse(output.textContent);
+        
+        // Validate against schema
+        const validationResults = validateEMDAgainstSchema(emdData);
+        
+        if (validationResults.valid) {
+            // Show success message
+            alert('EMD validation successful! The JSON is valid according to Klarna\'s schema.');
+        } else {
+            // Show validation errors
+            let errorMessage = 'EMD validation failed with the following errors:\n\n';
+            validationResults.errors.forEach((error, index) => {
+                errorMessage += `${index + 1}. ${error}\n`;
+            });
+            alert(errorMessage);
+        }
+    } catch (error) {
+        alert('Error validating EMD: ' + error.message + '\n\nPlease check for syntax errors in your JSON.');
+    }
+}
+
+// Function to validate EMD data against schema
+function validateEMDAgainstSchema(emdData) {
+    const errors = [];
+    
+    // Check if emdData is an object
+    if (typeof emdData !== 'object' || emdData === null || Array.isArray(emdData)) {
+        errors.push('EMD data must be a JSON object');
+        return { valid: false, errors };
+    }
+    
+    // Validate each section in the EMD data
+    for (const [sectionKey, sectionData] of Object.entries(emdData)) {
+        // Check if section exists in schema
+        if (!window.emdSchema.properties[sectionKey]) {
+            errors.push(`Unknown section: "${sectionKey}"`);
+            continue;
+        }
+        
+        // Check if section data is an array
+        if (!Array.isArray(sectionData)) {
+            errors.push(`Section "${sectionKey}" must be an array`);
+            continue;
+        }
+        
+        // Get schema for this section
+        const sectionSchema = window.emdSchema.properties[sectionKey];
+        
+        // Validate each item in the section array
+        sectionData.forEach((item, itemIndex) => {
+            if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+                errors.push(`Item ${itemIndex + 1} in "${sectionKey}" must be an object`);
+                return;
+            }
+            
+            // Validate item properties against schema
+            validateObject(item, sectionSchema.items, `${sectionKey}[${itemIndex}]`, errors);
+        });
+    }
+    
+    return {
+        valid: errors.length === 0,
+        errors: errors
+    };
+}
+
+// Recursive function to validate an object against a schema
+function validateObject(obj, schema, path, errors) {
+    if (!schema || !schema.properties) return;
+    
+    // Check for required properties if specified in schema
+    if (schema.required) {
+        schema.required.forEach(requiredProp => {
+            if (obj[requiredProp] === undefined) {
+                errors.push(`Missing required property "${requiredProp}" in ${path}`);
+            }
+        });
+    }
+    
+    // Validate each property in the object
+    for (const [propKey, propValue] of Object.entries(obj)) {
+        const propPath = `${path}.${propKey}`;
+        const propSchema = schema.properties[propKey];
+        
+        // Skip validation if property isn't in schema
+        if (!propSchema) {
+            errors.push(`Unknown property "${propKey}" in ${path}`);
+            continue;
+        }
+        
+        // Validate based on property type
+        switch (propSchema.type) {
+            case 'string':
+                if (typeof propValue !== 'string') {
+                    errors.push(`Property ${propPath} must be a string`);
+                } else {
+                    // Check string constraints
+                    if (propSchema.minLength && propValue.length < propSchema.minLength) {
+                        errors.push(`Property ${propPath} must be at least ${propSchema.minLength} characters`);
+                    }
+                    if (propSchema.maxLength && propValue.length > propSchema.maxLength) {
+                        errors.push(`Property ${propPath} must not exceed ${propSchema.maxLength} characters`);
+                    }
+                    if (propSchema.pattern && !new RegExp(propSchema.pattern).test(propValue)) {
+                        errors.push(`Property ${propPath} does not match required pattern`);
+                    }
+                    if (propSchema.enum && !propSchema.enum.includes(propValue)) {
+                        errors.push(`Property ${propPath} must be one of: ${propSchema.enum.join(', ')}`);
+                    }
+                }
+                break;
+                
+            case 'number':
+            case 'integer':
+                if (typeof propValue !== 'number') {
+                    errors.push(`Property ${propPath} must be a ${propSchema.type}`);
+                } else if (propSchema.type === 'integer' && !Number.isInteger(propValue)) {
+                    errors.push(`Property ${propPath} must be an integer`);
+                }
+                break;
+                
+            case 'boolean':
+                if (typeof propValue !== 'boolean') {
+                    errors.push(`Property ${propPath} must be a boolean`);
+                }
+                break;
+                
+            case 'array':
+                if (!Array.isArray(propValue)) {
+                    errors.push(`Property ${propPath} must be an array`);
+                } else {
+                    // Validate array items
+                    propValue.forEach((item, itemIndex) => {
+                        if (propSchema.items.type === 'object') {
+                            validateObject(item, propSchema.items, `${propPath}[${itemIndex}]`, errors);
+                        } else {
+                            validatePrimitive(item, propSchema.items, `${propPath}[${itemIndex}]`, errors);
+                        }
+                    });
+                }
+                break;
+                
+            case 'object':
+                if (typeof propValue !== 'object' || propValue === null || Array.isArray(propValue)) {
+                    errors.push(`Property ${propPath} must be an object`);
+                } else {
+                    validateObject(propValue, propSchema, propPath, errors);
+                }
+                break;
+        }
+    }
+}
+
+// Validate primitive types (string, number, integer, boolean)
+function validatePrimitive(value, schema, path, errors) {
+    switch (schema.type) {
+        case 'string':
+            if (typeof value !== 'string') {
+                errors.push(`Value at ${path} must be a string`);
+            }
+            break;
+        case 'number':
+            if (typeof value !== 'number') {
+                errors.push(`Value at ${path} must be a number`);
+            }
+            break;
+        case 'integer':
+            if (typeof value !== 'number' || !Number.isInteger(value)) {
+                errors.push(`Value at ${path} must be an integer`);
+            }
+            break;
+        case 'boolean':
+            if (typeof value !== 'boolean') {
+                errors.push(`Value at ${path} must be a boolean`);
+            }
+            break;
+    }
+}
