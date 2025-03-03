@@ -325,6 +325,8 @@ h1 {
     justify-content: center;
     align-items: center;
     z-index: 1001;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .popup-content {
@@ -332,11 +334,15 @@ h1 {
     border: 2px solid var(--win95-dark);
     border-top-color: var(--win95-highlight);
     border-left-color: var(--win95-highlight);
-    width: auto;
-    min-width: 300px;
+    width: 90%;
     max-width: 800px;
+    min-width: 300px;
+    max-height: 90vh;
     display: flex;
     flex-direction: column;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.25);
 }
 
 .popup-header {
@@ -371,26 +377,31 @@ h1 {
 }
 
 .popup-body {
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
+    padding: 16px;
+    flex: 1;
+    overflow: auto;
+    max-height: calc(90vh - 120px);
 }
 
 .serialized-container {
     background: var(--win95-white);
-    border: 2px inset var(--win95-dark);
+    border: 1px solid var(--win95-darker);
+    border-top-color: var(--win95-darker);
+    border-left-color: var(--win95-darker);
     padding: 8px;
-    font-family: monospace;
-    white-space: pre;
     overflow-x: auto;
-    text-align: left;
-    margin-bottom: 0;
+    max-height: 100%;
+    max-width: 100%;
+    word-break: break-all;
 }
 
 .serialized-container code {
+    font-family: "Courier New", monospace;
+    white-space: pre-wrap;
+    font-size: 14px;
+    line-height: 1.4;
     display: block;
-    text-align: left;
+    width: 100%;
 }
 
 /* Style for the copy button */

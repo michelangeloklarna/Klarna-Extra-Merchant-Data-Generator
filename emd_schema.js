@@ -177,6 +177,9 @@ function createFormForObject(schema) {
     testDataCheckbox.addEventListener('change', (e) => {
         if (e.target.checked) {
             fillWithTestData(form, schema);
+            
+            // Ensure all dropdowns have a selection
+            ensureDropdownsHaveSelection(form);
         } else {
             clearFormData(form);
         }
@@ -356,8 +359,30 @@ function validateField(input, schema, validationMsg) {
         // Always use the latest schema from Klarna for validation
         const schemaRules = window.emdSchema?.properties?.[input.name] || schema;
         
+        // Special validation for passenger_id
+        if (input.name === 'passenger_id') {
+            // Check if it's in proper array format like [1,2,3]
+            const arrayPattern = /^\[\s*\d+(?:\s*,\s*\d+)*\s*\]$/;
+            
+            if (!arrayPattern.test(input.value)) {
+                isValid = false;
+                messages.push('Must be in format [1], [1,2], [1,2,3], etc.');
+            } else {
+                // Check individual values in the array
+                try {
+                    const parsed = JSON.parse(input.value);
+                    if (!Array.isArray(parsed) || parsed.some(id => !Number.isInteger(id) || id <= 0)) {
+                        isValid = false;
+                        messages.push('All values must be positive integers');
+                    }
+                } catch (e) {
+                    isValid = false;
+                    messages.push('Invalid array format');
+                }
+            }
+        }
         // Type validation
-        if (schemaRules.type === 'integer' || schemaRules.type === 'number') {
+        else if (schemaRules.type === 'integer' || schemaRules.type === 'number') {
             const num = Number(input.value);
             
             // Basic number validation
@@ -366,8 +391,15 @@ function validateField(input, schema, validationMsg) {
                 messages.push(`Must be a ${schemaRules.type}`);
             }
             
-            // Passenger ID validation (must be positive integer)
-            if ((input.name.includes('passenger_id') || input.name === 'id') && num <= 0) {
+            // Price validation (must be positive)
+            if (schemaRules.description?.includes('price') && num < 0) {
+                isValid = false;
+                messages.push(`Must be a positive ${schemaRules.type}`);
+            }
+            
+            // ID validation (must be positive integer)
+            if ((input.name === 'id' || schemaRules.description?.includes('id')) && 
+                (!Number.isInteger(num) || num <= 0)) {
                 isValid = false;
                 messages.push('Must be a positive integer greater than 0');
             }
@@ -565,9 +597,11 @@ function generateEMD() {
 
 // Helper function to process field values according to schema
 function processFieldValue(value, schema) {
+    if (!value) return undefined;
+    
     switch (schema.type) {
-        case 'number':
         case 'integer':
+        case 'number':
             const num = Number(value);
             // Ensure positive numbers for prices and IDs
             if (schema.description?.includes('price') && num < 0) {
@@ -576,16 +610,33 @@ function processFieldValue(value, schema) {
             if (schema.description?.includes('id') && (!Number.isInteger(num) || num <= 0)) {
                 return undefined;
             }
-            return !isNaN(num) ? num : undefined;
+            return isNaN(num) ? undefined : num;
             
         case 'boolean':
             return value === 'true';
             
         case 'array':
             if (schema.items?.type === 'integer') {
+                // Special handling for passenger_id
+                if (schema.description?.includes('passenger')) {
+                    try {
+                        // Try to parse it as JSON first (for array format [1,2,3])
+                        if (value.trim().startsWith('[') && value.trim().endsWith(']')) {
+                            const parsed = JSON.parse(value);
+                            if (Array.isArray(parsed) && parsed.every(n => Number.isInteger(n) && n > 0)) {
+                                return parsed;
+                            }
+                        }
+                    } catch (e) {
+                        // Failed to parse as JSON, try comma-separated format
+                    }
+                }
+                
+                // Fallback to comma-separated format
                 const nums = value.split(',')
                     .map(v => parseInt(v.trim()))
                     .filter(v => !isNaN(v));
+                
                 // Validate passenger_id array values
                 if (schema.description?.includes('passenger') && 
                     nums.some(n => n <= 0 || !Number.isInteger(n))) {
@@ -625,11 +676,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // The EMD will now only generate when the button is clicked 
 
-function showSerializedEMD() {
+// Common function to serialize EMD data
+function serializeEMDData() {
     const output = document.getElementById('output').textContent;
     if (!output) {
         alert('Please generate EMD first');
-        return;
+        return null;
     }
 
     try {
@@ -639,23 +691,98 @@ function showSerializedEMD() {
         const serialized = JSON.stringify(JSON.stringify(emdData));
         
         // Remove the outer quotes that double stringify adds
-        const finalSerialized = serialized.slice(1, -1);
-        
-        // Show the serialized string in the popup
-        const serializedOutput = document.getElementById('serializedOutput');
-        serializedOutput.textContent = finalSerialized;
-        
-        // Show the popup
-        const popup = document.getElementById('serializePopup');
-        popup.style.display = 'block';
+        return serialized.slice(1, -1);
     } catch (error) {
         console.error('Error serializing EMD:', error);
         alert('Error serializing EMD data');
+        return null;
+    }
+}
+
+function showSerializedEMD() {
+    const finalSerialized = serializeEMDData();
+    if (!finalSerialized) return;
+    
+    // Show the serialized string in the popup
+    const serializedOutput = document.getElementById('serializedOutput');
+    serializedOutput.textContent = finalSerialized;
+    
+    // Show the popup with a smooth animation
+    const popup = document.getElementById('serializePopup');
+    popup.style.display = 'flex';
+    
+    // Force a reflow before adding the class to trigger animation
+    void popup.offsetWidth;
+    
+    // Ensure window is scrolled to top to see the popup properly
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+function showKlarnaPaymentReadyEMD() {
+    const output = document.getElementById('output').textContent;
+    if (!output) {
+        alert('Please generate EMD first');
+        return;
+    }
+
+    try {
+        // Parse the current EMD output
+        const emdData = JSON.parse(output);
+        
+        // Create the Klarna payment ready structure
+        const paymentReadyEMD = {
+            attachment: {
+                content_type: "application/vnd.klarna.internal.emd-v2+json",
+                body: JSON.stringify(emdData)
+            }
+        };
+        
+        // Format the JSON with indentation for display
+        const formattedPaymentReadyEMD = JSON.stringify(paymentReadyEMD, null, 2);
+        
+        // Remove the first { and the last two closing braces }} to get just the content
+        // Find the position of the second-to-last closing brace
+        const lastIndex = formattedPaymentReadyEMD.lastIndexOf('}');
+        const secondLastIndex = formattedPaymentReadyEMD.lastIndexOf('}', lastIndex - 1);
+        
+        // Extract content without the first { and last two }}
+        const contentWithoutBraces = formattedPaymentReadyEMD
+            .substring(1, secondLastIndex + 1)
+            .trim();
+        
+        // Show the modified content in the popup
+        const klarnaPaymentReadyOutput = document.getElementById('klarnaPaymentReadyOutput');
+        klarnaPaymentReadyOutput.textContent = contentWithoutBraces;
+        
+        // Show the popup with a smooth animation
+        const popup = document.getElementById('klarnaPaymentReadyPopup');
+        popup.style.display = 'flex';
+        
+        // Force a reflow before adding the class to trigger animation
+        void popup.offsetWidth;
+        
+        // Ensure window is scrolled to top to see the popup properly
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    } catch (error) {
+        console.error('Error creating Klarna Payment ready EMD:', error);
+        alert('Error creating Klarna Payment ready EMD');
     }
 }
 
 function closeSerializePopup() {
-    document.getElementById('serializePopup').style.display = 'none';
+    const popup = document.getElementById('serializePopup');
+    popup.style.display = 'none';
+}
+
+function closeKlarnaPaymentReadyPopup() {
+    const popup = document.getElementById('klarnaPaymentReadyPopup');
+    popup.style.display = 'none';
 }
 
 // Add this function to copy the serialized EMD
@@ -766,6 +893,46 @@ function validateSpecialFields(data, schema) {
     return true;
 }
 
+// Generate EMD after filling test data
+function generateAfterFillTestData() {
+    // Ensure all dropdowns have selections across the entire form
+    const formSections = document.querySelectorAll('.section');
+    formSections.forEach(section => {
+        ensureDropdownsHaveSelection(section);
+    });
+    
+    // Generate the EMD data
+    generateEMD();
+}
+
+// Function to ensure all dropdowns have a value selected
+function ensureDropdownsHaveSelection(form) {
+    // Process all dropdown/select elements in the form
+    const dropdowns = form.querySelectorAll('select');
+    dropdowns.forEach(dropdown => {
+        // If dropdown has no value selected but has options available
+        if (!dropdown.value && dropdown.options.length > 1) {
+            // Select the first non-empty option
+            for (let i = 1; i < dropdown.options.length; i++) {
+                if (dropdown.options[i].value) {
+                    dropdown.value = dropdown.options[i].value;
+                    
+                    // Trigger change event to update any dependent fields
+                    const event = new Event('change', { bubbles: true });
+                    dropdown.dispatchEvent(event);
+                    break;
+                }
+            }
+        }
+    });
+    
+    // Process nested forms in arrays
+    const arrayItems = form.querySelectorAll('.array-item');
+    arrayItems.forEach(item => {
+        ensureDropdownsHaveSelection(item);
+    });
+}
+
 // Add function to fill form with test data
 function fillWithTestData(form, schema) {
     Object.entries(schema.properties).forEach(([key, prop]) => {
@@ -781,7 +948,13 @@ function fillWithTestData(form, schema) {
             } else if (prop.type === 'boolean') {
                 input.value = example.toLowerCase();
             } else if (prop.enum) {
-                input.value = prop.enum[0];
+                // Always select the first non-empty enum value for dropdowns
+                const firstValue = prop.enum[0];
+                input.value = firstValue;
+                
+                // Trigger a change event to update any dependent fields
+                const event = new Event('change', { bubbles: true });
+                input.dispatchEvent(event);
             } else {
                 input.value = example;
             }
@@ -819,7 +992,7 @@ function fillWithTestData(form, schema) {
     });
 
     // Generate EMD after filling test data
-    setTimeout(generateEMD, 100);
+    setTimeout(generateAfterFillTestData, 100);
 }
 
 // Add function to clear form data
@@ -853,3 +1026,31 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+function copyKlarnaPaymentReadyEMD() {
+    const klarnaPaymentReadyOutput = document.getElementById('klarnaPaymentReadyOutput');
+    const textToCopy = klarnaPaymentReadyOutput.textContent;
+    
+    // Create a temporary textarea to copy from
+    const textarea = document.createElement('textarea');
+    textarea.value = textToCopy;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    
+    // Select and copy the text
+    textarea.select();
+    document.execCommand('copy');
+    
+    // Remove the textarea
+    document.body.removeChild(textarea);
+    
+    // Update the copy button to show feedback
+    const copyBtn = document.querySelector('#klarnaPaymentReadyPopup .popup-footer .generate-btn');
+    const originalText = copyBtn.textContent;
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => {
+        copyBtn.textContent = originalText;
+    }, 2000);
+}

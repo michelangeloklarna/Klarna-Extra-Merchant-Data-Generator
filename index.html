@@ -26,7 +26,8 @@
                 2. Click "Add" buttons to create new entries in each section<br>
                 3. Click "Generate EMD" to create the EMD JSON structure<br>
                 4. Use "Copy EMD to Clipboard" to copy the formatted JSON<br>
-                5. Use "Serialize EMD" to get the serialized string format
+                5. Use "Serialize EMD" to get the serialized string format<br>
+                6. Use "Klarna Payment ready EMD" to get the EMD in payment API format
                 <br><br>
                 <strong>Notes:</strong><br>
                 • All data is validated according to Klarna's specifications<br>
@@ -43,6 +44,7 @@
                 <button class="generate-btn" onclick="generateEMD()">Generate EMD</button>
                 <button class="generate-btn" onclick="copyGeneratedEMD()">Copy EMD to Clipboard</button>
                 <button class="generate-btn" onclick="showSerializedEMD()">Serialize EMD</button>
+                <button class="generate-btn" onclick="showKlarnaPaymentReadyEMD()">Klarna Payment ready EMD</button>
             </div>
             <div id="output" class="output-box"></div>
         </div>
@@ -62,6 +64,24 @@
             </div>
             <div class="popup-footer">
                 <button class="generate-btn" onclick="copySerializedEMD()">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Klarna Payment ready EMD popup HTML -->
+    <div id="klarnaPaymentReadyPopup" class="popup" style="display: none;">
+        <div class="popup-content">
+            <div class="popup-header">
+                <span>Klarna Payment ready EMD</span>
+                <button class="close-btn" onclick="closeKlarnaPaymentReadyPopup()">×</button>
+            </div>
+            <div class="popup-body">
+                <div class="serialized-container">
+                    <code id="klarnaPaymentReadyOutput"></code>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button class="generate-btn" onclick="copyKlarnaPaymentReadyEMD()">Copy to Clipboard</button>
             </div>
         </div>
     </div>

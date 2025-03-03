@@ -48,6 +48,7 @@ The tool supports various EMD types including:
   - Formatted JSON for readability and debugging
   - Serialized format ready for API requests
   - Properly escaped strings for API submission
+  - Klarna Payment API ready format with attachment structure
 
 - **Clipboard Support**: 
   - Easy copying of both formatted and serialized outputs
@@ -65,10 +66,16 @@ The tool supports various EMD types including:
 2. **Generate EMD**:
    - Click "Generate EMD" to create the JSON structure
    - Use "Copy EMD to Clipboard" for the formatted version
-   - Use "Serialize EMD" for the API-ready format
+   - Use "Serialize EMD" for the API-ready string format
+   - Use "Klarna Payment ready EMD" for the Payment API attachment format
    - Preview the output before using it
 
-3. **Validation**:
+3. **Output Formats**:
+   - Standard EMD: Complete JSON structure for validation and debugging
+   - Serialized EMD: Escaped string format for API integration
+   - Klarna Payment ready EMD: Formatted with attachment structure for direct use in Payment API
+
+4. **Validation**:
    - Fields are validated in real-time
    - Red indicators show validation errors
    - Hover over fields for validation rules
@@ -89,6 +96,13 @@ The tool supports various EMD types including:
 - **No Data Storage**: No data is sent to any server
 - **Validation**: Uses Klarna's official schema for validation rules
 - **Output Format**: Generates EMD in both readable and API-ready formats
+- **Payment API Support**: Creates output formatted for direct use in Klarna Payment API with proper attachment structure:
+  ```json
+  "attachment": {
+    "content_type": "application/vnd.klarna.internal.emd-v2+json",
+    "body": "{\"serialized_emd_data\"}"
+  }
+  ```
 
 ## Local Development
 
