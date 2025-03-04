@@ -1,22 +1,17 @@
 function generateFormFromSchema(schema) {
     const container = document.querySelector('.container');
     const outputSection = document.querySelector('.output-section');
-    const header = container.querySelector('h1');
-    const disclaimer = container.querySelector('.disclaimer-box');
+    const generatorTab = document.getElementById('generator-tab');
     
-    // Clear existing sections except header, disclaimer, and output
-    Array.from(container.children).forEach(child => {
-        if (child !== header && 
-            child !== disclaimer && 
-            !child.classList.contains('output-section')) {
-            child.remove();
-        }
-    });
+    // Clear existing sections in the generator tab
+    while (generatorTab.children.length > 1) { // Keep the disclaimer box
+        generatorTab.removeChild(generatorTab.lastChild);
+    }
 
     // Generate sections for each property in the schema
     for (const [key, value] of Object.entries(schema.properties)) {
         const section = createSection(key, value);
-        container.insertBefore(section, outputSection);
+        generatorTab.appendChild(section);
     }
 }
 
@@ -38,6 +33,9 @@ async function initializeEMDSchema() {
         // Generate form using the fetched schema
         generateFormFromSchema(schema);
         
+        // Set up tab switching
+        setupTabNavigation();
+        
         console.log('Successfully loaded schema from Klarna API');
         return schema;
     } catch (error) {
@@ -45,6 +43,24 @@ async function initializeEMDSchema() {
         alert('Failed to load latest schema from Klarna. Please try refreshing the page.');
         throw error;
     }
+}
+
+// Setup tab navigation
+function setupTabNavigation() {
+    // Set initial tab state
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    // Add click event listeners to tab buttons
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabId = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+            switchTab(tabId);
+        });
+    });
+    
+    // Initialize with generator tab active
+    switchTab('generator');
 }
 
 function createSection(key, schema) {
@@ -667,183 +683,585 @@ function processFieldValue(value, schema) {
     }
 }
 
-// Initialize the schema when the page loads
+// Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initializeEMDSchema().catch(error => {
         console.error('Failed to initialize EMD schema:', error);
     });
 });
 
-// The EMD will now only generate when the button is clicked 
-
-// Common function to serialize EMD data
-function serializeEMDData() {
-    const output = document.getElementById('output').textContent;
-    if (!output) {
-        alert('Please generate EMD first');
-        return null;
+// Tab switching functionality
+function switchTab(tabId) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => tab.classList.remove('active'));
+    
+    // Deactivate all tab buttons
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => button.classList.remove('active'));
+    
+    // Show the selected tab content
+    const selectedTab = document.getElementById(`${tabId}-tab`);
+    selectedTab.classList.add('active');
+    
+    // Activate the selected tab button
+    const selectedButton = document.querySelector(`.tab-button[onclick="switchTab('${tabId}')"]`);
+    selectedButton.classList.add('active');
+    
+    // Update the output section visibility based on the active tab
+    const outputSection = document.querySelector('.output-section');
+    if (tabId === 'generator') {
+        outputSection.style.display = 'block';
+    } else {
+        outputSection.style.display = 'none';
     }
+}
 
+// EMD Validation functionality
+function validateEMD() {
+    const inputArea = document.getElementById('emd-input');
+    const statusElement = document.getElementById('validation-status');
+    const errorsElement = document.getElementById('validation-errors');
+    
+    // Clear previous validation results
+    statusElement.textContent = '';
+    statusElement.className = 'validation-status';
+    errorsElement.innerHTML = '';
+    
     try {
-        // Parse the current EMD output and then stringify it to create a serialized string
-        const emdData = JSON.parse(output);
-        // Double stringify to create a JSON string that can be used as a string value
-        const serialized = JSON.stringify(JSON.stringify(emdData));
+        // Parse the input JSON
+        const emdData = JSON.parse(inputArea.value);
         
-        // Remove the outer quotes that double stringify adds
-        return serialized.slice(1, -1);
+        // Check if schema is available
+        if (!window.emdSchema) {
+            statusElement.textContent = '✗ Schema not loaded';
+            statusElement.classList.add('invalid');
+            return;
+        }
+        
+        // Special handling for train_reservation_details
+        if (emdData.train_reservation_details) {
+            // Pre-process passenger_id fields to ensure they're treated correctly
+            emdData.train_reservation_details.forEach(reservation => {
+                if (reservation.itinerary) {
+                    reservation.itinerary.forEach(segment => {
+                        // Ensure passenger_id is treated as an array of integers
+                        if (segment.passenger_id && Array.isArray(segment.passenger_id)) {
+                            // No need to modify, our special handling will take care of it
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Validate against the schema
+        const validationResult = validateAgainstSchema(emdData, window.emdSchema);
+        
+        if (validationResult.valid) {
+            // Show success message
+            statusElement.textContent = '✓ Valid EMD JSON';
+            statusElement.classList.add('valid');
+            
+            // Store the validated EMD for reference
+            window.validatedEMD = emdData;
+        } else {
+            // Filter out passenger_id array type errors that are actually valid
+            const filteredErrors = validationResult.errors.filter(error => {
+                // Skip errors about passenger_id being an array when it actually is an array of integers
+                return !(error.path.endsWith('passenger_id') && 
+                       error.message.includes('Expected type') &&
+                       error.message.includes('got array'));
+            });
+            
+            if (filteredErrors.length === 0) {
+                // If all errors were filtered out, the JSON is actually valid
+                statusElement.textContent = '✓ Valid EMD JSON';
+                statusElement.classList.add('valid');
+                
+                // Store the validated EMD for reference
+                window.validatedEMD = emdData;
+            } else {
+                // Show error message with filtered errors
+                statusElement.textContent = `✗ Invalid EMD JSON - ${filteredErrors.length} error(s) found`;
+                statusElement.classList.add('invalid');
+                
+                // Display validation errors
+                filteredErrors.forEach(error => {
+                    const errorItem = document.createElement('div');
+                    errorItem.className = 'error-item';
+                    
+                    const errorPath = document.createElement('div');
+                    errorPath.className = 'error-path';
+                    errorPath.textContent = `Path: ${error.path || 'root'}`;
+                    
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'error-message';
+                    errorMessage.textContent = error.message;
+                    
+                    errorItem.appendChild(errorPath);
+                    errorItem.appendChild(errorMessage);
+                    errorsElement.appendChild(errorItem);
+                });
+            }
+        }
     } catch (error) {
-        console.error('Error serializing EMD:', error);
-        alert('Error serializing EMD data');
-        return null;
+        // Handle JSON parsing errors
+        statusElement.textContent = '✗ Invalid JSON format';
+        statusElement.classList.add('invalid');
+        
+        const errorItem = document.createElement('div');
+        errorItem.className = 'error-item';
+        errorItem.textContent = `Error: ${error.message}`;
+        errorsElement.appendChild(errorItem);
     }
 }
 
-function showSerializedEMD() {
-    const finalSerialized = serializeEMDData();
-    if (!finalSerialized) return;
+// Function to copy validation results to clipboard
+function copyValidationResults() {
+    const statusElement = document.getElementById('validation-status');
+    const errorsElement = document.getElementById('validation-errors');
+    const copyButton = document.getElementById('copy-validation-btn');
     
-    // Show the serialized string in the popup
-    const serializedOutput = document.getElementById('serializedOutput');
-    serializedOutput.textContent = finalSerialized;
-    
-    // Show the popup with a smooth animation
-    const popup = document.getElementById('serializePopup');
-    popup.style.display = 'flex';
-    
-    // Force a reflow before adding the class to trigger animation
-    void popup.offsetWidth;
-    
-    // Ensure window is scrolled to top to see the popup properly
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-}
-
-function showKlarnaPaymentReadyEMD() {
-    const output = document.getElementById('output').textContent;
-    if (!output) {
-        alert('Please generate EMD first');
+    // Check if there are validation results to copy
+    if (!statusElement.textContent && errorsElement.innerHTML === '') {
+        alert('Please validate EMD first');
         return;
     }
-
-    try {
-        // Parse the current EMD output
-        const emdData = JSON.parse(output);
-        
-        // Create the Klarna payment ready structure
-        const paymentReadyEMD = {
-            attachment: {
-                content_type: "application/vnd.klarna.internal.emd-v2+json",
-                body: JSON.stringify(emdData)
+    
+    // Create a text representation of the validation results
+    let resultText = statusElement.textContent + '\n\n';
+    
+    // Add error details if any
+    const errorItems = errorsElement.querySelectorAll('.error-item');
+    if (errorItems.length > 0) {
+        errorItems.forEach(item => {
+            const path = item.querySelector('.error-path');
+            const message = item.querySelector('.error-message');
+            
+            if (path && message) {
+                resultText += `${path.textContent}\n${message.textContent}\n\n`;
+            } else {
+                resultText += `${item.textContent}\n\n`;
             }
-        };
-        
-        // Format the JSON with indentation for display
-        const formattedPaymentReadyEMD = JSON.stringify(paymentReadyEMD, null, 2);
-        
-        // Remove the first { and the last two closing braces }} to get just the content
-        // Find the position of the second-to-last closing brace
-        const lastIndex = formattedPaymentReadyEMD.lastIndexOf('}');
-        const secondLastIndex = formattedPaymentReadyEMD.lastIndexOf('}', lastIndex - 1);
-        
-        // Extract content without the first { and last two }}
-        const contentWithoutBraces = formattedPaymentReadyEMD
-            .substring(1, secondLastIndex + 1)
-            .trim();
-        
-        // Show the modified content in the popup
-        const klarnaPaymentReadyOutput = document.getElementById('klarnaPaymentReadyOutput');
-        klarnaPaymentReadyOutput.textContent = contentWithoutBraces;
-        
-        // Show the popup with a smooth animation
-        const popup = document.getElementById('klarnaPaymentReadyPopup');
-        popup.style.display = 'flex';
-        
-        // Force a reflow before adding the class to trigger animation
-        void popup.offsetWidth;
-        
-        // Ensure window is scrolled to top to see the popup properly
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
         });
-    } catch (error) {
-        console.error('Error creating Klarna Payment ready EMD:', error);
-        alert('Error creating Klarna Payment ready EMD');
     }
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(resultText)
+        .then(() => {
+            // Provide visual feedback
+            const originalText = copyButton.textContent;
+            copyButton.textContent = 'Copied!';
+            
+            // Reset button text after a delay
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+            }, 2000);
+        })
+        .catch(err => {
+            console.error('Failed to copy validation results:', err);
+            alert('Failed to copy validation results to clipboard');
+        });
 }
 
-function closeSerializePopup() {
-    const popup = document.getElementById('serializePopup');
-    popup.style.display = 'none';
+// Clear the validator input and results
+function clearValidatorInput() {
+    const inputArea = document.getElementById('emd-input');
+    const statusElement = document.getElementById('validation-status');
+    const errorsElement = document.getElementById('validation-errors');
+    
+    inputArea.value = '';
+    statusElement.textContent = '';
+    statusElement.className = 'validation-status';
+    errorsElement.innerHTML = '';
+    
+    // Clear the stored validated EMD
+    window.validatedEMD = null;
 }
 
-function closeKlarnaPaymentReadyPopup() {
-    const popup = document.getElementById('klarnaPaymentReadyPopup');
-    popup.style.display = 'none';
+// Validate JSON against the EMD schema
+function validateAgainstSchema(data, schema, path = '') {
+    const errors = [];
+    
+    // Check if data is an object
+    if (typeof data !== 'object' || data === null) {
+        return {
+            valid: false,
+            errors: [{ path, message: 'Expected an object' }]
+        };
+    }
+    
+    // Check required properties if defined in schema
+    if (schema.required) {
+        for (const requiredProp of schema.required) {
+            if (!(requiredProp in data)) {
+                errors.push({
+                    path: path ? `${path}.${requiredProp}` : requiredProp,
+                    message: `Missing required property: ${requiredProp}`
+                });
+            }
+        }
+    }
+    
+    // Validate properties
+    if (schema.properties) {
+        for (const [propName, propValue] of Object.entries(data)) {
+            const propSchema = schema.properties[propName];
+            
+            if (!propSchema) {
+                // Unknown property
+                if (schema.additionalProperties === false) {
+                    errors.push({
+                        path: path ? `${path}.${propName}` : propName,
+                        message: `Unknown property: ${propName}`
+                    });
+                }
+                continue;
+            }
+            
+            // Validate property value
+            const propPath = path ? `${path}.${propName}` : propName;
+            const propErrors = validateProperty(propValue, propSchema, propPath);
+            errors.push(...propErrors);
+        }
+    }
+    
+    return {
+        valid: errors.length === 0,
+        errors
+    };
+}
+
+// Validate a property against its schema
+function validateProperty(value, schema, path) {
+    const errors = [];
+    
+    // Special handling for passenger_id which is an array of integers
+    if (path.endsWith('passenger_id')) {
+        // Check if it's an array
+        if (!Array.isArray(value)) {
+            errors.push({
+                path,
+                message: `Expected an array of integers, got ${typeof value}`
+            });
+            return errors;
+        }
+        
+        // Check if all items are integers
+        for (let i = 0; i < value.length; i++) {
+            if (!Number.isInteger(value[i])) {
+                errors.push({
+                    path: `${path}[${i}]`,
+                    message: `Expected an integer, got ${typeof value[i]}`
+                });
+            }
+        }
+        
+        return errors;
+    }
+    
+    // Check type
+    if (schema.type) {
+        const typeValid = checkType(value, schema.type);
+        if (!typeValid) {
+            errors.push({
+                path,
+                message: `Expected type ${schema.type}, got ${Array.isArray(value) ? 'array' : typeof value}`
+            });
+            return errors; // Stop validation if type is wrong
+        }
+    }
+    
+    // Validate string constraints
+    if (schema.type === 'string') {
+        if (schema.minLength !== undefined && value.length < schema.minLength) {
+            errors.push({
+                path,
+                message: `String is too short (${value.length} chars), minimum is ${schema.minLength}`
+            });
+        }
+        
+        if (schema.maxLength !== undefined && value.length > schema.maxLength) {
+            errors.push({
+                path,
+                message: `String is too long (${value.length} chars), maximum is ${schema.maxLength}`
+            });
+        }
+        
+        if (schema.pattern && !new RegExp(schema.pattern).test(value)) {
+            errors.push({
+                path,
+                message: `String does not match pattern: ${schema.pattern}`
+            });
+        }
+        
+        // Check enum values
+        if (schema.enum && !schema.enum.includes(value)) {
+            errors.push({
+                path,
+                message: `Value must be one of: ${schema.enum.join(', ')}`
+            });
+        }
+    }
+    
+    // Validate number constraints
+    if (schema.type === 'number' || schema.type === 'integer') {
+        if (schema.minimum !== undefined && value < schema.minimum) {
+            errors.push({
+                path,
+                message: `Value ${value} is less than minimum ${schema.minimum}`
+            });
+        }
+        
+        if (schema.maximum !== undefined && value > schema.maximum) {
+            errors.push({
+                path,
+                message: `Value ${value} is greater than maximum ${schema.maximum}`
+            });
+        }
+        
+        if (schema.type === 'integer' && !Number.isInteger(value)) {
+            errors.push({
+                path,
+                message: `Value ${value} is not an integer`
+            });
+        }
+        
+        // Check multipleOf
+        if (schema.multipleOf !== undefined) {
+            const remainder = value % schema.multipleOf;
+            if (remainder !== 0) {
+                errors.push({
+                    path,
+                    message: `Value ${value} is not a multiple of ${schema.multipleOf}`
+                });
+            }
+        }
+    }
+    
+    // Validate array
+    if (schema.type === 'array' && schema.items) {
+        // Handle array of integers specifically
+        if (schema.items.type === 'integer') {
+            for (let i = 0; i < value.length; i++) {
+                if (!Number.isInteger(value[i])) {
+                    errors.push({
+                        path: `${path}[${i}]`,
+                        message: `Expected an integer, got ${typeof value[i]}`
+                    });
+                }
+            }
+        } else {
+            // Regular array validation
+            value.forEach((item, index) => {
+                const itemPath = `${path}[${index}]`;
+                const itemErrors = validateProperty(item, schema.items, itemPath);
+                errors.push(...itemErrors);
+            });
+        }
+        
+        if (schema.minItems !== undefined && value.length < schema.minItems) {
+            errors.push({
+                path,
+                message: `Array has too few items (${value.length}), minimum is ${schema.minItems}`
+            });
+        }
+        
+        if (schema.maxItems !== undefined && value.length > schema.maxItems) {
+            errors.push({
+                path,
+                message: `Array has too many items (${value.length}), maximum is ${schema.maxItems}`
+            });
+        }
+        
+        // Check uniqueItems
+        if (schema.uniqueItems === true) {
+            const uniqueValues = new Set();
+            const duplicates = [];
+            
+            value.forEach((item, index) => {
+                const itemStr = JSON.stringify(item);
+                if (uniqueValues.has(itemStr)) {
+                    duplicates.push(index);
+                } else {
+                    uniqueValues.add(itemStr);
+                }
+            });
+            
+            if (duplicates.length > 0) {
+                errors.push({
+                    path,
+                    message: `Array must have unique items. Duplicates found at indices: ${duplicates.join(', ')}`
+                });
+            }
+        }
+    }
+    
+    // Validate object
+    if (schema.type === 'object' && schema.properties) {
+        const objErrors = validateAgainstSchema(value, schema, path).errors;
+        errors.push(...objErrors);
+    }
+    
+    // Handle format validations (common in EMD schema)
+    if (schema.format) {
+        const formatErrors = validateFormat(value, schema.format, path);
+        errors.push(...formatErrors);
+    }
+    
+    return errors;
+}
+
+// Validate format-specific constraints
+function validateFormat(value, format, path) {
+    const errors = [];
+    
+    switch (format) {
+        case 'date':
+            // Check if it's a valid date in YYYY-MM-DD format
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                errors.push({
+                    path,
+                    message: `Invalid date format. Expected YYYY-MM-DD`
+                });
+            } else {
+                // Check if it's a valid date
+                const date = new Date(value);
+                if (isNaN(date.getTime())) {
+                    errors.push({
+                        path,
+                        message: `Invalid date: ${value}`
+                    });
+                }
+            }
+            break;
+            
+        case 'time':
+            // Check if it's a valid time in HH:MM format
+            if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(value)) {
+                errors.push({
+                    path,
+                    message: `Invalid time format. Expected HH:MM (24-hour)`
+                });
+            }
+            break;
+            
+        case 'email':
+            // Simple email validation
+            if (!/^[^@]+@[^@]+\.[^@]+$/.test(value)) {
+                errors.push({
+                    path,
+                    message: `Invalid email format`
+                });
+            }
+            break;
+            
+        case 'uri':
+            try {
+                new URL(value);
+            } catch (e) {
+                errors.push({
+                    path,
+                    message: `Invalid URI format`
+                });
+            }
+            break;
+    }
+    
+    return errors;
+}
+
+// Check if a value matches the expected type
+function checkType(value, expectedType) {
+    // Handle array type
+    if (expectedType === 'array') {
+        return Array.isArray(value);
+    }
+    
+    // Handle integer type
+    if (expectedType === 'integer') {
+        return typeof value === 'number' && Number.isInteger(value);
+    }
+    
+    // Handle number type
+    if (expectedType === 'number') {
+        return typeof value === 'number';
+    }
+    
+    // Handle object type
+    if (expectedType === 'object') {
+        return typeof value === 'object' && value !== null && !Array.isArray(value);
+    }
+    
+    // Handle boolean type
+    if (expectedType === 'boolean') {
+        return typeof value === 'boolean';
+    }
+    
+    // Handle null type
+    if (expectedType === 'null') {
+        return value === null;
+    }
+    
+    // Default to typeof check for other types
+    return typeof value === expectedType;
 }
 
 // Add this function to copy the serialized EMD
 function copySerializedEMD() {
     const serializedOutput = document.getElementById('serializedOutput');
-    const textToCopy = serializedOutput.textContent;
+    const text = serializedOutput.textContent;
     
-    // Create a temporary textarea element
-    const textarea = document.createElement('textarea');
-    textarea.value = textToCopy;
-    document.body.appendChild(textarea);
-    
-    try {
-        // Select and copy the text
-        textarea.select();
-        document.execCommand('copy');
-        
-        // Show feedback
-        const copyBtn = document.querySelector('.popup-footer .generate-btn');
-        const originalText = copyBtn.textContent;
-        copyBtn.textContent = 'Copied!';
-        setTimeout(() => {
-            copyBtn.textContent = originalText;
-        }, 2000);
-    } catch (err) {
-        console.error('Failed to copy text: ', err);
-        alert('Failed to copy to clipboard');
-    } finally {
-        // Clean up
-        document.body.removeChild(textarea);
+    if (!text) {
+        alert('No serialized EMD to copy');
+        return;
     }
+    
+    // Use the Clipboard API to copy the text
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            // Provide visual feedback that the copy was successful
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            
+            // Reset the button text after a short delay
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        })
+        .catch(err => {
+            console.error('Failed to copy text: ', err);
+            alert('Failed to copy to clipboard');
+        });
 }
 
 // Add this function to copy the generated EMD
 function copyGeneratedEMD() {
     const output = document.getElementById('output');
-    if (!output.textContent) {
-        alert('Please generate EMD first');
+    const text = output.textContent;
+    
+    if (!text) {
+        alert('No EMD to copy');
         return;
     }
     
-    const textarea = document.createElement('textarea');
-    textarea.value = output.textContent;
-    document.body.appendChild(textarea);
-    
-    try {
-        textarea.select();
-        document.execCommand('copy');
-        
-        const copyBtn = document.querySelector('.output-section .generate-btn:last-child');
-        const originalText = copyBtn.textContent;
-        copyBtn.textContent = 'Copied!';
-        setTimeout(() => {
-            copyBtn.textContent = originalText;
-        }, 2000);
-    } catch (err) {
-        console.error('Failed to copy text: ', err);
-        alert('Failed to copy to clipboard');
-    } finally {
-        document.body.removeChild(textarea);
-    }
+    // Use the Clipboard API to copy the text
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            // Provide visual feedback that the copy was successful
+            const copyBtn = document.querySelector('.button-group .generate-btn:nth-child(2)');
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            
+            // Reset the button text after a short delay
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        })
+        .catch(err => {
+            console.error('Failed to copy text: ', err);
+            alert('Failed to copy to clipboard');
+        });
 }
 
 // Add schema-specific validation for special fields
@@ -1029,28 +1447,349 @@ document.head.appendChild(style);
 
 function copyKlarnaPaymentReadyEMD() {
     const klarnaPaymentReadyOutput = document.getElementById('klarnaPaymentReadyOutput');
-    const textToCopy = klarnaPaymentReadyOutput.textContent;
+    const text = klarnaPaymentReadyOutput.textContent;
     
-    // Create a temporary textarea to copy from
-    const textarea = document.createElement('textarea');
-    textarea.value = textToCopy;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'absolute';
-    textarea.style.left = '-9999px';
-    document.body.appendChild(textarea);
+    if (!text) {
+        alert('No Klarna Payment ready EMD to copy');
+        return;
+    }
     
-    // Select and copy the text
-    textarea.select();
-    document.execCommand('copy');
+    // Use the Clipboard API to copy the text
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            // Provide visual feedback that the copy was successful
+            const copyBtn = document.querySelector('#klarnaPaymentReadyPopup .popup-footer .generate-btn');
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            
+            // Reset the button text after a short delay
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        })
+        .catch(err => {
+            console.error('Failed to copy text: ', err);
+            alert('Failed to copy to clipboard');
+        });
+}
+
+// Common function to serialize EMD data
+function serializeEMDData() {
+    const output = document.getElementById('output').textContent;
+    if (!output) {
+        alert('Please generate EMD first');
+        return null;
+    }
+
+    try {
+        // Parse the current EMD output and then stringify it to create a serialized string
+        const emdData = JSON.parse(output);
+        // Double stringify to create a JSON string that can be used as a string value
+        const serialized = JSON.stringify(JSON.stringify(emdData));
+        
+        // Remove the outer quotes that double stringify adds
+        return serialized.slice(1, -1);
+    } catch (error) {
+        console.error('Error serializing EMD:', error);
+        alert('Error serializing EMD data');
+        return null;
+    }
+}
+
+function showSerializedEMD() {
+    const finalSerialized = serializeEMDData();
+    if (!finalSerialized) return;
     
-    // Remove the textarea
-    document.body.removeChild(textarea);
+    // Show the serialized string in the popup
+    const serializedOutput = document.getElementById('serializedOutput');
+    serializedOutput.textContent = finalSerialized;
     
-    // Update the copy button to show feedback
-    const copyBtn = document.querySelector('#klarnaPaymentReadyPopup .popup-footer .generate-btn');
-    const originalText = copyBtn.textContent;
-    copyBtn.textContent = 'Copied!';
-    setTimeout(() => {
-        copyBtn.textContent = originalText;
-    }, 2000);
+    // Show the popup with a smooth animation
+    const popup = document.getElementById('serializePopup');
+    popup.style.display = 'flex';
+    
+    // Force a reflow before adding the class to trigger animation
+    void popup.offsetWidth;
+    
+    // Ensure window is scrolled to top to see the popup properly
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+function showKlarnaPaymentReadyEMD() {
+    const output = document.getElementById('output').textContent;
+    if (!output) {
+        alert('Please generate EMD first');
+        return;
+    }
+
+    try {
+        // Parse the current EMD output
+        const emdData = JSON.parse(output);
+        
+        // Create the Klarna payment ready structure
+        const paymentReadyEMD = {
+            attachment: {
+                content_type: "application/vnd.klarna.internal.emd-v2+json",
+                body: JSON.stringify(emdData)
+            }
+        };
+        
+        // Format the JSON with indentation for display
+        const formattedPaymentReadyEMD = JSON.stringify(paymentReadyEMD, null, 2);
+        
+        // Remove the first { and the last two closing braces }} to get just the content
+        // Find the position of the second-to-last closing brace
+        const lastIndex = formattedPaymentReadyEMD.lastIndexOf('}');
+        const secondLastIndex = formattedPaymentReadyEMD.lastIndexOf('}', lastIndex - 1);
+        
+        // Extract content without the first { and last two }}
+        const contentWithoutBraces = formattedPaymentReadyEMD
+            .substring(1, secondLastIndex + 1)
+            .trim();
+        
+        // Show the modified content in the popup
+        const klarnaPaymentReadyOutput = document.getElementById('klarnaPaymentReadyOutput');
+        klarnaPaymentReadyOutput.textContent = contentWithoutBraces;
+        
+        // Show the popup with a smooth animation
+        const popup = document.getElementById('klarnaPaymentReadyPopup');
+        popup.style.display = 'flex';
+        
+        // Force a reflow before adding the class to trigger animation
+        void popup.offsetWidth;
+        
+        // Ensure window is scrolled to top to see the popup properly
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    } catch (error) {
+        console.error('Error creating Klarna Payment ready EMD:', error);
+        alert('Error creating Klarna Payment ready EMD');
+    }
+}
+
+function closeSerializePopup() {
+    const popup = document.getElementById('serializePopup');
+    popup.style.display = 'none';
+}
+
+function closeKlarnaPaymentReadyPopup() {
+    const popup = document.getElementById('klarnaPaymentReadyPopup');
+    popup.style.display = 'none';
+}
+
+// Function to show serialized EMD from validator
+function showSerializedValidatorEMD() {
+    const inputArea = document.getElementById('emd-input');
+    
+    // Check if there's input to serialize
+    if (!inputArea.value.trim()) {
+        alert('Please enter EMD JSON and validate it first');
+        return;
+    }
+    
+    try {
+        // Parse the input JSON
+        const emdData = JSON.parse(inputArea.value);
+        
+        // Double stringify to create a JSON string that can be used as a string value
+        const serialized = JSON.stringify(JSON.stringify(emdData));
+        
+        // Remove the outer quotes that double stringify adds
+        const finalSerialized = serialized.slice(1, -1);
+        
+        // Show the serialized string in the popup
+        const serializedOutput = document.getElementById('serializedOutput');
+        serializedOutput.textContent = finalSerialized;
+        
+        // Show the popup with a smooth animation
+        const popup = document.getElementById('serializePopup');
+        popup.style.display = 'flex';
+        
+        // Force a reflow before adding the class to trigger animation
+        void popup.offsetWidth;
+        
+        // Ensure window is scrolled to top to see the popup properly
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    } catch (error) {
+        console.error('Error serializing EMD:', error);
+        alert('Error serializing EMD data. Please ensure your JSON is valid.');
+    }
+}
+
+// Function to show Klarna payment ready EMD from validator
+function showKlarnaPaymentReadyValidatorEMD() {
+    const inputArea = document.getElementById('emd-input');
+    
+    // Check if there's input to format
+    if (!inputArea.value.trim()) {
+        alert('Please enter EMD JSON and validate it first');
+        return;
+    }
+    
+    try {
+        // Parse the input JSON
+        const emdData = JSON.parse(inputArea.value);
+        
+        // Create the Klarna payment ready structure
+        const paymentReadyEMD = {
+            attachment: {
+                content_type: "application/vnd.klarna.internal.emd-v2+json",
+                body: JSON.stringify(emdData)
+            }
+        };
+        
+        // Format the JSON with indentation for display
+        const formattedPaymentReadyEMD = JSON.stringify(paymentReadyEMD, null, 2);
+        
+        // Remove the first { and the last two closing braces }} to get just the content
+        // Find the position of the second-to-last closing brace
+        const lastIndex = formattedPaymentReadyEMD.lastIndexOf('}');
+        const secondLastIndex = formattedPaymentReadyEMD.lastIndexOf('}', lastIndex - 1);
+        
+        // Extract content without the first { and last two }}
+        const contentWithoutBraces = formattedPaymentReadyEMD
+            .substring(1, secondLastIndex + 1)
+            .trim();
+        
+        // Show the modified content in the popup
+        const klarnaPaymentReadyOutput = document.getElementById('klarnaPaymentReadyOutput');
+        klarnaPaymentReadyOutput.textContent = contentWithoutBraces;
+        
+        // Show the popup with a smooth animation
+        const popup = document.getElementById('klarnaPaymentReadyPopup');
+        popup.style.display = 'flex';
+        
+        // Force a reflow before adding the class to trigger animation
+        void popup.offsetWidth;
+        
+        // Ensure window is scrolled to top to see the popup properly
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    } catch (error) {
+        console.error('Error creating Klarna Payment ready EMD:', error);
+        alert('Error creating Klarna Payment ready EMD. Please ensure your JSON is valid.');
+    }
+}
+
+// Function to encode EMD to Base64 from generator
+function encodeBase64EMD() {
+    const output = document.getElementById('output').textContent;
+    if (!output) {
+        alert('Please generate EMD first');
+        return;
+    }
+
+    try {
+        // Parse the current EMD output
+        const emdData = JSON.parse(output);
+        
+        // Convert to JSON string and then to Base64
+        const jsonString = JSON.stringify(emdData);
+        const base64Encoded = btoa(jsonString);
+        
+        // Show the Base64 encoded string in the popup
+        const base64Output = document.getElementById('base64Output');
+        base64Output.textContent = base64Encoded;
+        
+        // Show the popup
+        const popup = document.getElementById('base64Popup');
+        popup.style.display = 'flex';
+        
+        // Force a reflow before adding the class to trigger animation
+        void popup.offsetWidth;
+        
+        // Ensure window is scrolled to top to see the popup properly
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    } catch (error) {
+        console.error('Error encoding EMD to Base64:', error);
+        alert('Error encoding EMD to Base64');
+    }
+}
+
+// Function to encode EMD to Base64 from validator
+function encodeBase64ValidatorEMD() {
+    const inputArea = document.getElementById('emd-input');
+    
+    // Check if there's input to encode
+    if (!inputArea.value.trim()) {
+        alert('Please enter EMD JSON first');
+        return;
+    }
+    
+    try {
+        // Parse the input JSON to validate it
+        const emdData = JSON.parse(inputArea.value);
+        
+        // Convert to JSON string and then to Base64
+        const jsonString = JSON.stringify(emdData);
+        const base64Encoded = btoa(jsonString);
+        
+        // Show the Base64 encoded string in the popup
+        const base64Output = document.getElementById('base64Output');
+        base64Output.textContent = base64Encoded;
+        
+        // Show the popup
+        const popup = document.getElementById('base64Popup');
+        popup.style.display = 'flex';
+        
+        // Force a reflow before adding the class to trigger animation
+        void popup.offsetWidth;
+        
+        // Ensure window is scrolled to top to see the popup properly
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    } catch (error) {
+        console.error('Error encoding EMD to Base64:', error);
+        alert('Error encoding EMD to Base64. Please ensure your JSON is valid.');
+    }
+}
+
+// Function to copy Base64 encoded EMD to clipboard
+function copyBase64EMD() {
+    const base64Output = document.getElementById('base64Output');
+    const text = base64Output.textContent;
+    
+    if (!text) {
+        alert('No Base64 encoded EMD to copy');
+        return;
+    }
+    
+    // Use the Clipboard API to copy the text
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            // Provide visual feedback that the copy was successful
+            const copyBtn = document.querySelector('#base64Popup .popup-footer .generate-btn');
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            
+            // Reset the button text after a short delay
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+            }, 2000);
+        })
+        .catch(err => {
+            console.error('Failed to copy text: ', err);
+            alert('Failed to copy to clipboard');
+        });
+}
+
+// Function to close the Base64 popup
+function closeBase64Popup() {
+    const popup = document.getElementById('base64Popup');
+    popup.style.display = 'none';
 }

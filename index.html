@@ -20,30 +20,88 @@
     <div class="container">
         <h1>Klarna Extra Merchant Data Generator</h1>
         
-        <!-- Disclaimer box -->
-        <div class="disclaimer-box">
-            <div class="disclaimer-header">
-                <span class="info-icon">i</span>
-                Information
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-button active" onclick="switchTab('generator')">EMD Generator</button>
+            <button class="tab-button" onclick="switchTab('validator')">EMD Validator</button>
+        </div>
+        
+        <!-- Generator Tab Content -->
+        <div id="generator-tab" class="tab-content active">
+            <!-- Disclaimer box -->
+            <div class="disclaimer-box">
+                <div class="disclaimer-header">
+                    <span class="info-icon">i</span>
+                    Information
+                </div>
+                <div class="disclaimer-content">
+                    <strong>About this tool:</strong><br>
+                    This tool uses the official Klarna Extra Merchant Data schema retrieved from 
+                    <a href="https://docs.klarna.com/api/extra-merchant-data.json" target="_blank">docs.klarna.com/api/extra-merchant-data.json</a>
+                    <br><br>
+                    <strong>How to use:</strong><br>
+                    1. Fill in the relevant fields in any section (Air Reservation, Hotel, etc.)<br>
+                    2. Click "Add" buttons to create new entries in each section<br>
+                    3. Click "Generate EMD" to create the EMD JSON structure<br>
+                    4. Use "Copy EMD to Clipboard" to copy the formatted JSON<br>
+                    5. Use "Serialize EMD" to get the serialized string format<br>
+                    6. Use "Klarna Payment ready EMD" to get the EMD in payment API format
+                    <br><br>
+                    <strong>Notes:</strong><br>
+                    • All data is validated according to Klarna's specifications<br>
+                    • The schema is automatically updated when Klarna makes changes<br>
+                    • No data is sent to any server - all validation happens in your browser<br>
+                    • Red validation messages indicate errors that need to be fixed
+                </div>
             </div>
-            <div class="disclaimer-content">
-                <strong>About this tool:</strong><br>
-                This tool uses the official Klarna Extra Merchant Data schema retrieved from 
-                <a href="https://docs.klarna.com/api/extra-merchant-data.json" target="_blank">docs.klarna.com/api/extra-merchant-data.json</a>
-                <br><br>
-                <strong>How to use:</strong><br>
-                1. Fill in the relevant fields in any section (Air Reservation, Hotel, etc.)<br>
-                2. Click "Add" buttons to create new entries in each section<br>
-                3. Click "Generate EMD" to create the EMD JSON structure<br>
-                4. Use "Copy EMD to Clipboard" to copy the formatted JSON<br>
-                5. Use "Serialize EMD" to get the serialized string format<br>
-                6. Use "Klarna Payment ready EMD" to get the EMD in payment API format
-                <br><br>
-                <strong>Notes:</strong><br>
-                • All data is validated according to Klarna's specifications<br>
-                • The schema is automatically updated when Klarna makes changes<br>
-                • No data is sent to any server - all validation happens in your browser<br>
-                • Red validation messages indicate errors that need to be fixed
+            
+            <!-- Generator content will be dynamically added here -->
+        </div>
+        
+        <!-- Validator Tab Content -->
+        <div id="validator-tab" class="tab-content">
+            <div class="disclaimer-box">
+                <div class="disclaimer-header">
+                    <span class="info-icon">i</span>
+                    Information
+                </div>
+                <div class="disclaimer-content">
+                    <strong>About this validator:</strong><br>
+                    This validator allows you to check if your Extra Merchant Data (EMD) JSON is valid according to Klarna's official schema.
+                    <br><br>
+                    <strong>How to use:</strong><br>
+                    1. Paste your EMD JSON in the input area below<br>
+                    2. Click "Validate EMD" to check if it conforms to Klarna's schema<br>
+                    3. Review any validation errors that are displayed<br>
+                    <br><br>
+                    <strong>Notes:</strong><br>
+                    • All validation happens in your browser - no data is sent to any server<br>
+                    • The validator uses the same official Klarna schema as the generator<br>
+                    • Detailed error messages will help you identify and fix issues in your EMD
+                </div>
+            </div>
+            
+            <div class="validator-section">
+                <h2 class="section-header">EMD Validator</h2>
+                <div class="section-content">
+                    <div class="form-group">
+                        <label for="emd-input">Paste your EMD JSON here:</label>
+                        <textarea id="emd-input" class="form-control validator-textarea" rows="10" placeholder='{"air_reservation_details": [...], ...}'></textarea>
+                    </div>
+                    <div class="button-container">
+                        <button class="generate-btn" onclick="validateEMD()">Validate EMD</button>
+                        <button class="generate-btn" onclick="clearValidatorInput()">Clear</button>
+                        <button class="generate-btn" onclick="copyValidationResults()" id="copy-validation-btn">Copy to Clipboard</button>
+                        <button class="generate-btn" onclick="showSerializedValidatorEMD()" id="serialize-validation-btn">Serialize EMD</button>
+                        <button class="generate-btn" onclick="encodeBase64ValidatorEMD()" id="base64-validation-btn">Encode Base64</button>
+                        <button class="generate-btn" onclick="showKlarnaPaymentReadyValidatorEMD()" id="klarna-ready-validation-btn">Klarna Payment ready EMD</button>
+                    </div>
+                    <div class="validation-results">
+                        <h3>Validation Results:</h3>
+                        <div id="validation-status" class="validation-status"></div>
+                        <div id="validation-errors" class="validation-errors"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -54,6 +112,7 @@
                 <button class="generate-btn" onclick="generateEMD()">Generate EMD</button>
                 <button class="generate-btn" onclick="copyGeneratedEMD()">Copy EMD to Clipboard</button>
                 <button class="generate-btn" onclick="showSerializedEMD()">Serialize EMD</button>
+                <button class="generate-btn" onclick="encodeBase64EMD()">Encode Base64</button>
                 <button class="generate-btn" onclick="showKlarnaPaymentReadyEMD()">Klarna Payment ready EMD</button>
             </div>
             <div id="output" class="output-box"></div>
@@ -92,6 +151,24 @@
             </div>
             <div class="popup-footer">
                 <button class="generate-btn" onclick="copyKlarnaPaymentReadyEMD()">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Base64 Encoded EMD popup HTML -->
+    <div id="base64Popup" class="popup" style="display: none;">
+        <div class="popup-content">
+            <div class="popup-header">
+                <span>Base64 Encoded EMD</span>
+                <button class="close-btn" onclick="closeBase64Popup()">×</button>
+            </div>
+            <div class="popup-body">
+                <div class="serialized-container">
+                    <code id="base64Output"></code>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button class="generate-btn" onclick="copyBase64EMD()">Copy to Clipboard</button>
             </div>
         </div>
     </div>

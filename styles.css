@@ -5,17 +5,28 @@
     --win95-white: #ffffff;
     --win95-dark: #808080;
     --win95-darker: #404040;
+    --win95-green: #008000;
+    --win95-red: #ff0000;
+    --win95-highlight: #ffffff;
+    --win95-font-primary: 'MS Sans Serif', Arial, sans-serif;
+    --win95-font-monospace: 'Courier New', monospace;
+    --win95-font-size-normal: 0.9rem;
+    --win95-font-size-small: 0.8rem;
+    --win95-standard-padding: 8px;
+    --win95-small-padding: 4px;
+    --win95-border-width: 2px;
 }
 
 body {
     background-color: #008080; /* Classic Windows 95 teal */
-    font-family: 'MS Sans Serif', Arial, sans-serif;
+    font-family: var(--win95-font-primary);
     margin: 0;
     padding: 16px;
+    font-size: var(--win95-font-size-normal);
 }
 
 .container {
-    border: 2px solid var(--win95-dark);
+    border: var(--win95-border-width) solid var(--win95-dark);
     background-color: var(--win95-gray);
     min-height: calc(100vh - 32px);
     position: relative;
@@ -24,119 +35,252 @@ body {
     box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+h1, h2, h3 {
+    font-family: var(--win95-font-primary);
+    margin: 0;
+    padding: var(--win95-small-padding);
+}
+
 h1 {
     background-color: var(--win95-blue);
     color: var(--win95-white);
-    margin: 0;
-    padding: 2px 4px;
     font-size: 1rem;
     font-weight: normal;
 }
 
+h2 {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+h3 {
+    font-size: var(--win95-font-size-normal);
+    font-weight: bold;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    background-color: var(--win95-gray);
+    border-bottom: var(--win95-border-width) solid var(--win95-dark);
+    padding: var(--win95-small-padding) var(--win95-small-padding) 0 var(--win95-small-padding);
+}
+
+.tab-button {
+    background-color: var(--win95-gray);
+    border: var(--win95-border-width) outset var(--win95-white);
+    padding: var(--win95-small-padding) 12px;
+    margin-right: var(--win95-small-padding);
+    cursor: pointer;
+    font-family: var(--win95-font-primary);
+    font-size: var(--win95-font-size-normal);
+    position: relative;
+    bottom: -2px;
+}
+
+.tab-button.active {
+    background-color: var(--win95-gray);
+    border-bottom: var(--win95-border-width) solid var(--win95-gray);
+    font-weight: bold;
+    z-index: 1;
+}
+
+.tab-content {
+    display: none;
+    padding: var(--win95-standard-padding);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Section Styling */
 .section-header {
     background-color: var(--win95-blue);
     color: var(--win95-white);
-    padding: 2px 4px;
-    margin-top: 2px;
+    padding: var(--win95-small-padding);
+    margin-top: var(--win95-small-padding);
 }
 
 .section-content {
-    padding: 8px;
+    padding: var(--win95-standard-padding);
 }
 
+/* Form Elements */
 .form-group {
-    margin-bottom: 8px;
+    margin-bottom: var(--win95-standard-padding);
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: var(--win95-small-padding);
+    font-family: var(--win95-font-primary);
+    font-size: var(--win95-font-size-normal);
 }
 
 .form-control {
     width: 100%;
-    padding: 2px 4px;
-    border: 2px inset var(--win95-dark);
+    padding: var(--win95-small-padding);
+    border: var(--win95-border-width) inset var(--win95-dark);
     background-color: var(--win95-white);
-    font-family: 'MS Sans Serif', Arial, sans-serif;
-    font-size: 1rem;
+    font-family: var(--win95-font-primary);
+    font-size: var(--win95-font-size-normal);
     box-sizing: border-box;
 }
 
+/* Standardize all textareas */
+textarea.form-control {
+    font-family: var(--win95-font-monospace);
+    min-height: 150px;
+    resize: vertical;
+}
+
+/* Validator specific styles */
+.validator-textarea {
+    font-family: var(--win95-font-monospace) !important;
+    min-height: 200px;
+    resize: vertical;
+}
+
+.validation-results {
+    margin-top: 16px;
+    padding: var(--win95-standard-padding);
+    border: var(--win95-border-width) inset var(--win95-dark);
+    background-color: var(--win95-white);
+}
+
+.validation-results h3 {
+    margin-top: 0;
+    font-size: var(--win95-font-size-normal);
+    font-weight: bold;
+}
+
+.validation-status {
+    padding: var(--win95-small-padding);
+    margin-bottom: var(--win95-standard-padding);
+    font-weight: bold;
+    font-family: var(--win95-font-primary);
+}
+
+.validation-status.valid {
+    color: var(--win95-green);
+}
+
+.validation-status.invalid {
+    color: var(--win95-red);
+}
+
+.validation-errors {
+    font-family: var(--win95-font-monospace);
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: var(--win95-font-size-normal);
+    line-height: 1.4;
+}
+
+.error-item {
+    margin-bottom: var(--win95-standard-padding);
+    padding: var(--win95-small-padding);
+    border-left: 4px solid var(--win95-red);
+}
+
+.error-path {
+    font-weight: bold;
+}
+
+.error-message {
+    color: var(--win95-red);
+}
+
+.button-container {
+    margin: var(--win95-standard-padding) 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--win95-standard-padding);
+}
+
+/* Output Section */
 .output-section {
     position: fixed;
     bottom: 16px;
     left: 16px;
     right: 16px;
     background-color: var(--win95-gray);
-    border: 2px solid var(--win95-dark);
+    border: var(--win95-border-width) solid var(--win95-dark);
     border-top-color: var(--win95-darker);
     border-left-color: var(--win95-darker);
-    padding: 8px;
+    padding: var(--win95-standard-padding);
     z-index: 1000;
     box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Standardize all buttons */
+.generate-btn, .add-btn, .remove-btn, .close-btn {
+    background-color: var(--win95-gray);
+    border: var(--win95-border-width) outset var(--win95-dark);
+    padding: var(--win95-small-padding) 8px;
+    margin: 0;
+    cursor: pointer;
+    font-family: var(--win95-font-primary);
+    font-size: var(--win95-font-size-normal);
 }
 
 .generate-btn {
     background-color: var(--win95-blue);
     color: var(--win95-white);
-    border: 2px outset var(--win95-dark);
-    padding: 2px 8px;
-    margin: 4px 0;
-    cursor: pointer;
-    font-family: 'MS Sans Serif', Arial, sans-serif;
 }
 
-.generate-btn:active {
+.generate-btn:active, .add-btn:active, .remove-btn:active, .close-btn:active {
     border-style: inset;
+    padding-top: calc(var(--win95-small-padding) + 1px);
+    padding-left: calc(var(--win95-small-padding) + 1px);
 }
 
 .output-box {
     max-height: 150px;
     overflow-y: auto;
     background-color: var(--win95-white);
-    border: 2px inset var(--win95-dark);
-    padding: 8px;
-    margin-top: 4px;
-    font-family: monospace;
+    border: var(--win95-border-width) inset var(--win95-dark);
+    padding: var(--win95-standard-padding);
+    margin-top: var(--win95-small-padding);
+    font-family: var(--win95-font-monospace);
     white-space: pre;
+    font-size: var(--win95-font-size-normal);
+    line-height: 1.4;
 }
 
-/* Add to your existing CSS */
-.description {
-    font-size: 0.9rem;
-    margin-bottom: 8px;
+/* Standardize help text and descriptions */
+.description, .help-text {
+    font-size: var(--win95-font-size-small);
+    margin-bottom: var(--win95-standard-padding);
     color: var(--win95-darker);
+    font-family: var(--win95-font-primary);
 }
 
+/* Array containers and items */
 .array-container {
-    margin: 8px 0;
+    margin: var(--win95-standard-padding) 0;
 }
 
 .array-item {
     border: 1px solid var(--win95-dark);
-    padding: 8px;
-    margin: 8px 0;
+    padding: var(--win95-standard-padding);
+    margin: var(--win95-standard-padding) 0;
     position: relative;
+    background-color: var(--win95-gray);
 }
 
 .add-btn {
-    background-color: var(--win95-gray);
-    border: 2px outset var(--win95-dark);
-    padding: 2px 8px;
-    cursor: pointer;
+    padding: var(--win95-small-padding) 8px;
 }
 
 .remove-btn {
-    background-color: var(--win95-gray);
-    border: 2px outset var(--win95-dark);
     width: 16px;
     height: 14px;
     line-height: 8px;
     text-align: center;
     font-size: 12px;
-    font-family: 'Tahoma', sans-serif;
-    cursor: pointer;
     padding: 0;
     position: absolute;
     right: 2px;
@@ -147,89 +291,75 @@ h1 {
     justify-content: center;
 }
 
-.remove-btn:active {
-    border-style: inset;
-    padding-top: 1px;
-    padding-left: 1px;
-}
-
-.add-btn:active,
-.remove-btn:active {
-    border-style: inset;
-}
-
-/* Add to existing CSS */
-.help-text {
-    font-size: 0.8rem;
-    color: var(--win95-darker);
-    margin-bottom: 4px;
-    white-space: pre-line;
-}
-
+/* Validation styling */
 .validation-rules {
-    font-size: 0.8rem;
+    font-size: var(--win95-font-size-small);
     color: var(--win95-darker);
-    margin-top: 2px;
+    margin-top: var(--win95-small-padding);
+    font-family: var(--win95-font-primary);
 }
 
 .validation-message {
-    font-size: 0.8rem;
-    margin-top: 2px;
+    font-size: var(--win95-font-size-small);
+    margin-top: var(--win95-small-padding);
     min-height: 1em;
+    font-family: var(--win95-font-primary);
 }
 
 .validation-message.invalid {
-    color: #aa0000;
+    color: var(--win95-red);
 }
 
 .validation-message.valid {
-    color: #008000;
+    color: var(--win95-green);
 }
 
 .form-control.is-invalid {
-    border-color: #aa0000;
+    border-color: var(--win95-red);
     background-color: #ffeeee;
 }
 
 .form-control.is-valid {
-    border-color: #008000;
+    border-color: var(--win95-green);
     background-color: #eeffee;
 }
 
-/* Add to existing CSS */
+/* Array item header */
 .array-item-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: var(--win95-gray);
-    padding: 4px;
+    padding: var(--win95-small-padding);
     padding-right: 20px;
     border-bottom: 1px solid var(--win95-dark);
-    margin-bottom: 8px;
+    margin-bottom: var(--win95-standard-padding);
     position: relative;
+    font-family: var(--win95-font-primary);
+    font-size: var(--win95-font-size-normal);
 }
 
 .array-items {
-    margin-top: 8px;
+    margin-top: var(--win95-standard-padding);
 }
 
-.button-container {
-    margin-bottom: 8px;
-}
-
+/* Nested objects */
 .nested-object {
     border: 1px solid var(--win95-dark);
-    padding: 8px;
-    margin: 8px 0;
+    padding: var(--win95-standard-padding);
+    margin: var(--win95-standard-padding) 0;
+    background-color: var(--win95-gray);
 }
 
 .nested-object-label {
     font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: var(--win95-standard-padding);
+    font-family: var(--win95-font-primary);
+    font-size: var(--win95-font-size-normal);
 }
 
 .form-container {
-    padding: 4px;
+    padding: var(--win95-small-padding);
 }
 
 .array-container .array-container {
@@ -240,18 +370,29 @@ h1 {
     margin-bottom: 220px;
 }
 
-.output-box::-webkit-scrollbar {
+/* Standardize scrollbars for all scrollable elements */
+.output-box::-webkit-scrollbar,
+.validation-errors::-webkit-scrollbar,
+.serialized-container::-webkit-scrollbar,
+textarea::-webkit-scrollbar {
     width: 16px;
+    height: 16px;
 }
 
-.output-box::-webkit-scrollbar-track {
+.output-box::-webkit-scrollbar-track,
+.validation-errors::-webkit-scrollbar-track,
+.serialized-container::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track {
     background: var(--win95-gray);
     border: 2px solid;
     border-top-color: var(--win95-darker);
     border-left-color: var(--win95-darker);
 }
 
-.output-box::-webkit-scrollbar-thumb {
+.output-box::-webkit-scrollbar-thumb,
+.validation-errors::-webkit-scrollbar-thumb,
+.serialized-container::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb {
     background: var(--win95-gray);
     border: 2px solid;
     border-top-color: var(--win95-highlight);
@@ -260,20 +401,21 @@ h1 {
     border-bottom-color: var(--win95-darker);
 }
 
-/* Add to your existing CSS */
+/* Disclaimer box */
 .disclaimer-box {
-    margin: 8px 0;
-    border: 2px solid var(--win95-dark);
+    margin: var(--win95-standard-padding) 0;
+    border: var(--win95-border-width) solid var(--win95-dark);
     background-color: var(--win95-gray);
 }
 
 .disclaimer-header {
     background-color: var(--win95-blue);
     color: var(--win95-white);
-    padding: 2px 4px;
-    font-size: 1rem;
+    padding: var(--win95-small-padding);
+    font-size: var(--win95-font-size-normal);
     display: flex;
     align-items: center;
+    font-family: var(--win95-font-primary);
 }
 
 .info-icon {
@@ -293,9 +435,10 @@ h1 {
 }
 
 .disclaimer-content {
-    padding: 8px;
-    font-size: 0.9rem;
+    padding: var(--win95-standard-padding);
+    font-size: var(--win95-font-size-normal);
     line-height: 1.4;
+    font-family: var(--win95-font-primary);
 }
 
 .disclaimer-content a {
@@ -307,13 +450,15 @@ h1 {
     text-decoration: none;
 }
 
-/* Add to your existing CSS */
+/* Button groups */
 .button-group {
     display: flex;
-    gap: 8px;
-    margin: 4px 0;
+    flex-wrap: wrap;
+    gap: var(--win95-standard-padding);
+    margin: var(--win95-small-padding) 0;
 }
 
+/* Popup styling */
 .popup {
     position: fixed;
     top: 0;
@@ -331,7 +476,7 @@ h1 {
 
 .popup-content {
     background: var(--win95-gray);
-    border: 2px solid var(--win95-dark);
+    border: var(--win95-border-width) solid var(--win95-dark);
     border-top-color: var(--win95-highlight);
     border-left-color: var(--win95-highlight);
     width: 90%;
@@ -348,15 +493,15 @@ h1 {
 .popup-header {
     background: var(--win95-blue);
     color: var(--win95-white);
-    padding: 2px 4px;
+    padding: var(--win95-small-padding);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    font-family: var(--win95-font-primary);
+    font-size: var(--win95-font-size-normal);
 }
 
 .close-btn {
-    background: var(--win95-gray);
-    border: 2px outset var(--win95-dark);
     width: 16px;
     height: 14px;
     line-height: 8px;
@@ -368,63 +513,43 @@ h1 {
     align-items: center;
     justify-content: center;
     padding: 0;
-}
-
-.close-btn:active {
-    border-style: inset;
-    padding-top: 1px;
-    padding-left: 1px;
+    background-color: var(--win95-gray);
 }
 
 .popup-body {
-    padding: 16px;
+    padding: var(--win95-standard-padding);
     flex: 1;
     overflow: auto;
     max-height: calc(90vh - 120px);
+    display: flex;
+    flex-direction: column;
 }
 
 .serialized-container {
     background: var(--win95-white);
-    border: 1px solid var(--win95-darker);
-    border-top-color: var(--win95-darker);
-    border-left-color: var(--win95-darker);
-    padding: 8px;
+    border: var(--win95-border-width) inset var(--win95-dark);
+    padding: var(--win95-standard-padding);
     overflow-x: auto;
     max-height: 100%;
     max-width: 100%;
     word-break: break-all;
+    font-family: var(--win95-font-monospace);
+    white-space: pre;
+    text-align: left;
 }
 
 .serialized-container code {
-    font-family: "Courier New", monospace;
+    font-family: var(--win95-font-monospace);
     white-space: pre-wrap;
-    font-size: 14px;
+    font-size: var(--win95-font-size-normal);
     line-height: 1.4;
     display: block;
     width: 100%;
 }
 
-/* Style for the copy button */
-.copy-btn {
-    background-color: var(--win95-gray);
-    border: 2px outset var(--win95-dark);
-    padding: 4px 16px;
-    cursor: pointer;
-    font-family: 'MS Sans Serif', Arial, sans-serif;
-    align-self: flex-end;
-    min-width: 100px;
-    margin-top: 4px;
-}
-
-.copy-btn:active {
-    border-style: inset;
-    padding: 5px 17px 3px 15px;
-}
-
-/* Update/add these styles */
 .popup-footer {
-    padding: 8px;
-    border-top: 2px solid var(--win95-dark);
+    padding: var(--win95-standard-padding);
+    border-top: var(--win95-border-width) solid var(--win95-dark);
     display: flex;
     justify-content: flex-end;
     position: relative;
@@ -433,23 +558,6 @@ h1 {
     box-sizing: border-box;
 }
 
-/* Remove the old copy-btn styles and use generate-btn instead */
 .popup-footer .generate-btn {
     margin: 0;
-}
-
-.popup-body {
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-}
-
-.serialized-container {
-    background: var(--win95-white);
-    border: 2px inset var(--win95-dark);
-    padding: 8px;
-    font-family: monospace;
-    white-space: pre;
-    overflow-x: auto;
-    text-align: left;
 }

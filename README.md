@@ -49,13 +49,22 @@ The tool supports various EMD types including:
   - Serialized format ready for API requests
   - Properly escaped strings for API submission
   - Klarna Payment API ready format with attachment structure
+  - Base64 encoded output for specific integration needs
 
 - **Clipboard Support**: 
-  - Easy copying of both formatted and serialized outputs
+  - Easy copying of all output formats
   - One-click copy functionality
   - Visual feedback on copy operations
 
+- **Dedicated Validator**: 
+  - Separate tab for validating existing EMD data
+  - Detailed error reporting
+  - Same validation rules as the generator
+  - Multiple output options for validated data
+
 ## How to Use
+
+### Generator Tab
 
 1. **Fill in Data**:
    - Navigate through different sections (Air Reservation, Hotel, etc.)
@@ -67,19 +76,36 @@ The tool supports various EMD types including:
    - Click "Generate EMD" to create the JSON structure
    - Use "Copy EMD to Clipboard" for the formatted version
    - Use "Serialize EMD" for the API-ready string format
+   - Use "Encode Base64" for Base64 encoded output
    - Use "Klarna Payment ready EMD" for the Payment API attachment format
    - Preview the output before using it
 
-3. **Output Formats**:
-   - Standard EMD: Complete JSON structure for validation and debugging
-   - Serialized EMD: Escaped string format for API integration
-   - Klarna Payment ready EMD: Formatted with attachment structure for direct use in Payment API
+### Validator Tab
 
-4. **Validation**:
-   - Fields are validated in real-time
-   - Red indicators show validation errors
-   - Hover over fields for validation rules
-   - All validations follow Klarna's specifications
+1. **Validate Existing EMD**:
+   - Paste your existing EMD JSON into the validator textarea
+   - Click "Validate EMD" to check against Klarna's schema
+   - Review any validation errors that are displayed
+   - Fix issues based on detailed error messages
+
+2. **Process Validated EMD**:
+   - Use "Copy to Clipboard" to copy the validation results
+   - Use "Serialize EMD" to get the serialized string format
+   - Use "Encode Base64" for Base64 encoded output
+   - Use "Klarna Payment ready EMD" for the Payment API format
+
+## Output Formats
+
+- **Standard EMD**: Complete JSON structure for validation and debugging
+- **Serialized EMD**: Escaped string format for API integration
+- **Base64 Encoded EMD**: Base64 encoded format for specific integration needs
+- **Klarna Payment ready EMD**: Formatted with attachment structure for direct use in Payment API:
+  ```json
+  "attachment": {
+    "content_type": "application/vnd.klarna.internal.emd-v2+json",
+    "body": "{\"serialized_emd_data\"}"
+  }
+  ```
 
 ## Use Cases
 
@@ -88,6 +114,7 @@ The tool supports various EMD types including:
 - **Marketplaces**: Include seller and buyer information
 - **Hotels**: Provide detailed booking and guest information
 - **Transportation**: Handle bus, train, and ferry ticket reservations
+- **Developers**: Validate existing EMD data against Klarna's schema
 
 ## Technical Details
 
@@ -95,15 +122,46 @@ The tool supports various EMD types including:
 - **No Backend Required**: All processing happens in the browser
 - **No Data Storage**: No data is sent to any server
 - **Validation**: Uses Klarna's official schema for validation rules
-- **Output Format**: Generates EMD in both readable and API-ready formats
-- **Payment API Support**: Creates output formatted for direct use in Klarna Payment API with proper attachment structure:
-  ```json
-  "attachment": {
-    "content_type": "application/vnd.klarna.internal.emd-v2+json",
-    "body": "{\"serialized_emd_data\"}"
-  }
-  ```
+- **Output Format**: Generates EMD in multiple formats (JSON, serialized, Base64, Payment API)
+- **Payment API Support**: Creates output formatted for direct use in Klarna Payment API with proper attachment structure
 
 ## Local Development
 
 1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/klarna-emd-generator.git
+```
+
+2. Open the project:
+```bash
+cd klarna-emd-generator
+```
+
+3. Start a local server:
+```bash
+python -m http.server 8000
+```
+
+4. Open your browser and navigate to:
+```
+http://localhost:8000
+```
+
+## Browser Compatibility
+
+The tool is compatible with all modern browsers including:
+- Chrome
+- Firefox
+- Safari
+- Edge
+
+## Privacy
+
+- No data is sent to any server
+- All processing happens locally in your browser
+- No cookies or local storage is used to store your data
+- Your EMD data is never saved or transmitted
+
+## License
+
+This project is open source and available under the MIT License.
