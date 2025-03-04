@@ -44,7 +44,7 @@
                     2. Click "Add" buttons to create new entries in each section<br>
                     3. Click "Generate EMD" to create the EMD JSON structure<br>
                     4. Use "Copy EMD to Clipboard" to copy the formatted JSON<br>
-                    5. Use "Serialize EMD" to get the serialized string format<br>
+                    5. Use "Convert to String" to get the serialized string format<br>
                     6. Use "Klarna Payment ready EMD" to get the EMD in payment API format
                     <br><br>
                     <strong>Notes:</strong><br>
@@ -92,7 +92,7 @@
                         <button class="generate-btn" onclick="validateEMD()">Validate EMD</button>
                         <button class="generate-btn" onclick="clearValidatorInput()">Clear</button>
                         <button class="generate-btn" onclick="copyValidationResults()" id="copy-validation-btn">Copy to Clipboard</button>
-                        <button class="generate-btn" onclick="showSerializedValidatorEMD()" id="serialize-validation-btn">Serialize EMD</button>
+                        <button class="generate-btn" onclick="showSerializedValidatorEMD()" id="serialize-validation-btn">Convert to String</button>
                         <button class="generate-btn" onclick="encodeBase64ValidatorEMD()" id="base64-validation-btn">Encode Base64</button>
                         <button class="generate-btn" onclick="showKlarnaPaymentReadyValidatorEMD()" id="klarna-ready-validation-btn">Klarna Payment ready EMD</button>
                     </div>
@@ -111,7 +111,7 @@
             <div class="button-group">
                 <button class="generate-btn" onclick="generateEMD()">Generate EMD</button>
                 <button class="generate-btn" onclick="copyGeneratedEMD()">Copy EMD to Clipboard</button>
-                <button class="generate-btn" onclick="showSerializedEMD()">Serialize EMD</button>
+                <button class="generate-btn" onclick="showSerializedEMD()">Convert to String</button>
                 <button class="generate-btn" onclick="encodeBase64EMD()">Encode Base64</button>
                 <button class="generate-btn" onclick="showKlarnaPaymentReadyEMD()">Klarna Payment ready EMD</button>
             </div>
@@ -123,7 +123,7 @@
     <div id="serializePopup" class="popup" style="display: none;">
         <div class="popup-content">
             <div class="popup-header">
-                <span>Serialized EMD</span>
+                <span>String Format</span>
                 <button class="close-btn" onclick="closeSerializePopup()">×</button>
             </div>
             <div class="popup-body">
