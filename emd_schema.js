@@ -504,6 +504,9 @@ function generateEMD() {
             'event_label': 'Generate EMD Button Click',
             'value': 1
         });
+        console.log('GA Event sent: generate_emd');
+    } else {
+        console.warn('Google Analytics not available - event not sent');
     }
     
     const output = {};
