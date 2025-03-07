@@ -497,6 +497,15 @@ function formatTitle(key) {
 
 // Add this function to handle EMD generation
 function generateEMD() {
+    // Track the "Generate EMD" button click in Google Analytics
+    if (typeof gtag === 'function') {
+        gtag('event', 'generate_emd', {
+            'event_category': 'EMD Actions',
+            'event_label': 'Generate EMD Button Click',
+            'value': 1
+        });
+    }
+    
     const output = {};
     
     // Get all sections
@@ -692,6 +701,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Tab switching functionality
 function switchTab(tabId) {
+    // Track tab switching in Google Analytics
+    if (typeof gtag === 'function') {
+        gtag('event', 'switch_tab', {
+            'event_category': 'Navigation',
+            'event_label': `Switch to ${tabId} Tab`,
+            'value': 1
+        });
+    }
+    
     // Hide all tab contents
     const tabContents = document.querySelectorAll('.tab-content');
     tabContents.forEach(tab => tab.classList.remove('active'));
@@ -719,6 +737,15 @@ function switchTab(tabId) {
 
 // EMD Validation functionality
 function validateEMD() {
+    // Track the "Validate EMD" button click in Google Analytics
+    if (typeof gtag === 'function') {
+        gtag('event', 'validate_emd', {
+            'event_category': 'EMD Actions',
+            'event_label': 'Validate EMD Button Click',
+            'value': 1
+        });
+    }
+    
     const inputArea = document.getElementById('emd-input');
     const statusElement = document.getElementById('validation-status');
     const errorsElement = document.getElementById('validation-errors');
@@ -1237,6 +1264,15 @@ function copySerializedEMD() {
 
 // Add this function to copy the generated EMD
 function copyGeneratedEMD() {
+    // Track the "Copy EMD to Clipboard" button click in Google Analytics
+    if (typeof gtag === 'function') {
+        gtag('event', 'copy_emd', {
+            'event_category': 'EMD Actions',
+            'event_label': 'Copy EMD Button Click',
+            'value': 1
+        });
+    }
+    
     const output = document.getElementById('output');
     const text = output.textContent;
     
@@ -1482,6 +1518,15 @@ function serializeEMDData() {
     }
 
     try {
+        // Track the "Convert to String" button click in Google Analytics
+        if (typeof gtag === 'function') {
+            gtag('event', 'serialize_emd', {
+                'event_category': 'EMD Actions',
+                'event_label': 'Convert to String Button Click',
+                'value': 1
+            });
+        }
+        
         // Parse the current EMD output and then stringify it to create a serialized string
         const emdData = JSON.parse(output);
         // Double stringify to create a JSON string that can be used as a string value
@@ -1497,6 +1542,15 @@ function serializeEMDData() {
 }
 
 function showSerializedEMD() {
+    // Track the "Convert to String" button click in Google Analytics
+    if (typeof gtag === 'function') {
+        gtag('event', 'serialize_emd', {
+            'event_category': 'EMD Actions',
+            'event_label': 'Convert to String Button Click',
+            'value': 1
+        });
+    }
+    
     const finalSerialized = serializeEMDData();
     if (!finalSerialized) return;
     
@@ -1519,6 +1573,15 @@ function showSerializedEMD() {
 }
 
 function showKlarnaPaymentReadyEMD() {
+    // Track the "Klarna Payment ready EMD" button click in Google Analytics
+    if (typeof gtag === 'function') {
+        gtag('event', 'klarna_payment_ready_emd', {
+            'event_category': 'EMD Actions',
+            'event_label': 'Klarna Payment Ready EMD Button Click',
+            'value': 1
+        });
+    }
+    
     const output = document.getElementById('output').textContent;
     if (!output) {
         alert('Please generate EMD first');
@@ -1683,6 +1746,15 @@ function showKlarnaPaymentReadyValidatorEMD() {
 
 // Function to encode EMD to Base64 from generator
 function encodeBase64EMD() {
+    // Track the "Encode Base64" button click in Google Analytics
+    if (typeof gtag === 'function') {
+        gtag('event', 'base64_encode_emd', {
+            'event_category': 'EMD Actions',
+            'event_label': 'Encode Base64 Button Click',
+            'value': 1
+        });
+    }
+    
     const output = document.getElementById('output').textContent;
     if (!output) {
         alert('Please generate EMD first');
