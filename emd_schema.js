@@ -610,12 +610,60 @@ function generateEMD() {
     // Add debug logging
     console.log('Generated EMD:', output);
     
+    // Round all price values to avoid floating-point precision issues
+    const roundedOutput = roundAllPriceValues(output);
+    
     // Only update output if we have data
-    if (Object.keys(output).length > 0) {
-        document.getElementById('output').textContent = JSON.stringify(output, null, 2);
+    if (Object.keys(roundedOutput).length > 0) {
+        document.getElementById('output').textContent = JSON.stringify(roundedOutput, null, 2);
     } else {
         console.error('No data collected from form');
     }
+}
+
+// Function to handle floating-point precision issues for price values
+function roundPriceValue(value) {
+    // For price values, round to 2 decimal places to avoid floating-point precision issues
+    // This is especially important for values like 3390.9999999999995 which should be 3391.00
+    if (typeof value !== 'number' || isNaN(value)) {
+        return value;
+    }
+    
+    // Round to 2 decimal places for most currencies
+    // For currencies without decimal places (like JPY), this won't affect the value
+    return Math.round(value * 100) / 100;
+}
+
+// Function to recursively round all price values in an object
+function roundAllPriceValues(data) {
+    // If data is not an object or is null, return it as is
+    if (typeof data !== 'object' || data === null) {
+        return data;
+    }
+    
+    // If data is an array, process each item
+    if (Array.isArray(data)) {
+        return data.map(item => roundAllPriceValues(item));
+    }
+    
+    // Process each property in the object
+    const result = {};
+    for (const [key, value] of Object.entries(data)) {
+        // Round price values and other monetary fields
+        if ((key.endsWith('_price') || key.includes('price') || key === 'total_amount_paid_purchases') && typeof value === 'number') {
+            result[key] = roundPriceValue(value);
+        } 
+        // Recursively process nested objects
+        else if (typeof value === 'object' && value !== null) {
+            result[key] = roundAllPriceValues(value);
+        } 
+        // Keep other values as is
+        else {
+            result[key] = value;
+        }
+    }
+    
+    return result;
 }
 
 // Helper function to process field values according to schema
@@ -633,6 +681,12 @@ function processFieldValue(value, schema) {
             if (schema.description?.includes('id') && (!Number.isInteger(num) || num <= 0)) {
                 return undefined;
             }
+            
+            // Handle floating-point precision issues for price fields
+            if (schema.description?.includes('price') || key === 'total_amount_paid_purchases') {
+                return roundPriceValue(num);
+            }
+            
             return isNaN(num) ? undefined : num;
             
         case 'boolean':
@@ -731,6 +785,109 @@ function switchTab(tabId) {
     }
 }
 
+// Validate format-specific constraints
+function validateFormat(value, format, path) {
+    const errors = [];
+    
+    switch (format) {
+        case 'date':
+            // Check if it's a valid date in YYYY-MM-DD format
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                errors.push({
+                    path,
+                    message: `Invalid date format. Expected YYYY-MM-DD`
+                });
+            } else {
+                // Check if it's a valid date
+                const date = new Date(value);
+                if (isNaN(date.getTime())) {
+                    errors.push({
+                        path,
+                        message: `Invalid date: ${value}`
+                    });
+                }
+            }
+            break;
+            
+        case 'time':
+            // Check if it's a valid time in HH:MM format
+            if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(value)) {
+                errors.push({
+                    path,
+                    message: `Invalid time format. Expected HH:MM (24-hour)`
+                });
+            }
+            break;
+            
+        case 'email':
+            // Simple email validation
+            if (!/^[^@]+@[^@]+\.[^@]+$/.test(value)) {
+                errors.push({
+                    path,
+                    message: `Invalid email format`
+                });
+            }
+            break;
+            
+        case 'uri':
+            try {
+                new URL(value);
+            } catch (e) {
+                errors.push({
+                    path,
+                    message: `Invalid URI format`
+                });
+            }
+            break;
+    }
+    
+    return errors;
+}
+
+// Function to check for floating-point precision issues in price fields
+function checkPriceFieldPrecision(data, path = '') {
+    const warnings = [];
+    
+    // If data is not an object or array, return empty warnings
+    if (typeof data !== 'object' || data === null) {
+        return warnings;
+    }
+    
+    // If data is an array, check each item
+    if (Array.isArray(data)) {
+        data.forEach((item, index) => {
+            const itemPath = path ? `${path}[${index}]` : `[${index}]`;
+            const itemWarnings = checkPriceFieldPrecision(item, itemPath);
+            warnings.push(...itemWarnings);
+        });
+        return warnings;
+    }
+    
+    // Check each property in the object
+    for (const [key, value] of Object.entries(data)) {
+        const propertyPath = path ? `${path}.${key}` : key;
+        
+        // Check if this is a price field or other monetary field
+        if ((key.endsWith('_price') || key.includes('price') || key === 'total_amount_paid_purchases') && typeof value === 'number') {
+            const roundedValue = roundPriceValue(value);
+            if (roundedValue !== value) {
+                warnings.push({
+                    path: propertyPath,
+                    message: `Floating-point precision issue detected: ${value} should be rounded to ${roundedValue}`
+                });
+            }
+        }
+        
+        // Recursively check nested objects and arrays
+        if (typeof value === 'object' && value !== null) {
+            const nestedWarnings = checkPriceFieldPrecision(value, propertyPath);
+            warnings.push(...nestedWarnings);
+        }
+    }
+    
+    return warnings;
+}
+
 // EMD Validation functionality
 function validateEMD() {
     // Track the "Validate EMD" button click in Google Analytics
@@ -785,6 +942,33 @@ function validateEMD() {
             
             // Store the validated EMD for reference
             window.validatedEMD = emdData;
+            
+            // Check for floating-point precision warnings in price fields
+            const priceWarnings = checkPriceFieldPrecision(emdData);
+            if (priceWarnings.length > 0) {
+                // Add warnings to the validation results
+                const warningHeader = document.createElement('div');
+                warningHeader.className = 'warning-header';
+                warningHeader.textContent = 'Warnings (these do not invalidate the EMD):';
+                errorsElement.appendChild(warningHeader);
+                
+                priceWarnings.forEach(warning => {
+                    const warningItem = document.createElement('div');
+                    warningItem.className = 'warning-item';
+                    
+                    const warningPath = document.createElement('div');
+                    warningPath.className = 'warning-path';
+                    warningPath.textContent = `Path: ${warning.path}`;
+                    
+                    const warningMessage = document.createElement('div');
+                    warningMessage.className = 'warning-message';
+                    warningMessage.textContent = warning.message;
+                    
+                    warningItem.appendChild(warningPath);
+                    warningItem.appendChild(warningMessage);
+                    errorsElement.appendChild(warningItem);
+                });
+            }
         } else {
             // Filter out passenger_id array type errors that are actually valid
             const filteredErrors = validationResult.errors.filter(error => {
@@ -1048,6 +1232,18 @@ function validateProperty(value, schema, path) {
             });
         }
         
+        // Check for floating-point precision issues in price fields
+        if (path.endsWith('_price') || path.includes('price') || path === 'total_amount_paid_purchases') {
+            const roundedValue = roundPriceValue(value);
+            if (roundedValue !== value) {
+                // This is just a warning, not an error that would invalidate the EMD
+                console.warn(`Floating-point precision issue detected at ${path}: ${value} rounded to ${roundedValue}`);
+                
+                // We don't add this to errors because we want to allow the validation to pass
+                // but we want to log it for debugging purposes
+            }
+        }
+        
         // Check multipleOf
         if (schema.multipleOf !== undefined) {
             const remainder = value % schema.multipleOf;
@@ -1128,65 +1324,6 @@ function validateProperty(value, schema, path) {
     if (schema.format) {
         const formatErrors = validateFormat(value, schema.format, path);
         errors.push(...formatErrors);
-    }
-    
-    return errors;
-}
-
-// Validate format-specific constraints
-function validateFormat(value, format, path) {
-    const errors = [];
-    
-    switch (format) {
-        case 'date':
-            // Check if it's a valid date in YYYY-MM-DD format
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-                errors.push({
-                    path,
-                    message: `Invalid date format. Expected YYYY-MM-DD`
-                });
-            } else {
-                // Check if it's a valid date
-                const date = new Date(value);
-                if (isNaN(date.getTime())) {
-                    errors.push({
-                        path,
-                        message: `Invalid date: ${value}`
-                    });
-                }
-            }
-            break;
-            
-        case 'time':
-            // Check if it's a valid time in HH:MM format
-            if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(value)) {
-                errors.push({
-                    path,
-                    message: `Invalid time format. Expected HH:MM (24-hour)`
-                });
-            }
-            break;
-            
-        case 'email':
-            // Simple email validation
-            if (!/^[^@]+@[^@]+\.[^@]+$/.test(value)) {
-                errors.push({
-                    path,
-                    message: `Invalid email format`
-                });
-            }
-            break;
-            
-        case 'uri':
-            try {
-                new URL(value);
-            } catch (e) {
-                errors.push({
-                    path,
-                    message: `Invalid URI format`
-                });
-            }
-            break;
     }
     
     return errors;
@@ -1469,6 +1606,28 @@ style.textContent = `
         font-size: 12px;
         color: var(--win95-dark);
         user-select: none;
+    }
+    
+    .warning-header {
+        margin-top: 10px;
+        font-weight: bold;
+        color: #ff8c00; /* Dark orange for warnings */
+    }
+    
+    .warning-item {
+        margin: 5px 0;
+        padding: 5px;
+        border-left: 3px solid #ff8c00;
+        background-color: #fff8e1;
+    }
+    
+    .warning-path {
+        font-weight: bold;
+        margin-bottom: 3px;
+    }
+    
+    .warning-message {
+        color: #ff8c00;
     }
 `;
 document.head.appendChild(style);
