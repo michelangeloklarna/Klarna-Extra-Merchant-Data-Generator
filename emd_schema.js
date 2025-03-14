@@ -497,17 +497,12 @@ function formatTitle(key) {
 
 // Add this function to handle EMD generation
 function generateEMD() {
-    // Track the "Generate EMD" button click in Google Analytics
-    if (typeof gtag === 'function') {
-        gtag('event', 'generate_emd', {
-            'event_category': 'EMD Actions',
-            'event_label': 'Generate EMD Button Click',
-            'value': 1
-        });
-        console.log('GA Event sent: generate_emd');
-    } else {
-        console.warn('Google Analytics not available - event not sent');
-    }
+    // Track the "Generate EMD" button click in Google Analytics using the offline-aware function
+    sendAnalyticsEvent('generate_emd', {
+        'event_category': 'EMD Actions',
+        'event_label': 'Generate EMD Button Click',
+        'value': 1
+    });
     
     const output = {};
     
@@ -705,13 +700,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // Tab switching functionality
 function switchTab(tabId) {
     // Track tab switching in Google Analytics
-    if (typeof gtag === 'function') {
-        gtag('event', 'switch_tab', {
-            'event_category': 'Navigation',
-            'event_label': `Switch to ${tabId} Tab`,
-            'value': 1
-        });
-    }
+    sendAnalyticsEvent('switch_tab', {
+        'event_category': 'Navigation',
+        'event_label': `Switch to ${tabId} Tab`,
+        'value': 1
+    });
     
     // Hide all tab contents
     const tabContents = document.querySelectorAll('.tab-content');
@@ -741,13 +734,11 @@ function switchTab(tabId) {
 // EMD Validation functionality
 function validateEMD() {
     // Track the "Validate EMD" button click in Google Analytics
-    if (typeof gtag === 'function') {
-        gtag('event', 'validate_emd', {
-            'event_category': 'EMD Actions',
-            'event_label': 'Validate EMD Button Click',
-            'value': 1
-        });
-    }
+    sendAnalyticsEvent('validate_emd', {
+        'event_category': 'EMD Actions',
+        'event_label': 'Validate EMD Button Click',
+        'value': 1
+    });
     
     const inputArea = document.getElementById('emd-input');
     const statusElement = document.getElementById('validation-status');
@@ -1268,13 +1259,11 @@ function copySerializedEMD() {
 // Add this function to copy the generated EMD
 function copyGeneratedEMD() {
     // Track the "Copy EMD to Clipboard" button click in Google Analytics
-    if (typeof gtag === 'function') {
-        gtag('event', 'copy_emd', {
-            'event_category': 'EMD Actions',
-            'event_label': 'Copy EMD Button Click',
-            'value': 1
-        });
-    }
+    sendAnalyticsEvent('copy_emd', {
+        'event_category': 'EMD Actions',
+        'event_label': 'Copy EMD Button Click',
+        'value': 1
+    });
     
     const output = document.getElementById('output');
     const text = output.textContent;
@@ -1522,13 +1511,11 @@ function serializeEMDData() {
 
     try {
         // Track the "Convert to String" button click in Google Analytics
-        if (typeof gtag === 'function') {
-            gtag('event', 'serialize_emd', {
-                'event_category': 'EMD Actions',
-                'event_label': 'Convert to String Button Click',
-                'value': 1
-            });
-        }
+        sendAnalyticsEvent('serialize_emd', {
+            'event_category': 'EMD Actions',
+            'event_label': 'Convert to String Button Click',
+            'value': 1
+        });
         
         // Parse the current EMD output and then stringify it to create a serialized string
         const emdData = JSON.parse(output);
@@ -1546,13 +1533,11 @@ function serializeEMDData() {
 
 function showSerializedEMD() {
     // Track the "Convert to String" button click in Google Analytics
-    if (typeof gtag === 'function') {
-        gtag('event', 'serialize_emd', {
-            'event_category': 'EMD Actions',
-            'event_label': 'Convert to String Button Click',
-            'value': 1
-        });
-    }
+    sendAnalyticsEvent('serialize_emd', {
+        'event_category': 'EMD Actions',
+        'event_label': 'Convert to String Button Click',
+        'value': 1
+    });
     
     const finalSerialized = serializeEMDData();
     if (!finalSerialized) return;
@@ -1577,13 +1562,11 @@ function showSerializedEMD() {
 
 function showKlarnaPaymentReadyEMD() {
     // Track the "Klarna Payment ready EMD" button click in Google Analytics
-    if (typeof gtag === 'function') {
-        gtag('event', 'klarna_payment_ready_emd', {
-            'event_category': 'EMD Actions',
-            'event_label': 'Klarna Payment Ready EMD Button Click',
-            'value': 1
-        });
-    }
+    sendAnalyticsEvent('klarna_payment_ready_emd', {
+        'event_category': 'EMD Actions',
+        'event_label': 'Klarna Payment Ready EMD Button Click',
+        'value': 1
+    });
     
     const output = document.getElementById('output').textContent;
     if (!output) {
@@ -1750,13 +1733,11 @@ function showKlarnaPaymentReadyValidatorEMD() {
 // Function to encode EMD to Base64 from generator
 function encodeBase64EMD() {
     // Track the "Encode Base64" button click in Google Analytics
-    if (typeof gtag === 'function') {
-        gtag('event', 'base64_encode_emd', {
-            'event_category': 'EMD Actions',
-            'event_label': 'Encode Base64 Button Click',
-            'value': 1
-        });
-    }
+    sendAnalyticsEvent('base64_encode_emd', {
+        'event_category': 'EMD Actions',
+        'event_label': 'Encode Base64 Button Click',
+        'value': 1
+    });
     
     const output = document.getElementById('output').textContent;
     if (!output) {
@@ -1865,6 +1846,162 @@ function copyBase64EMD() {
 
 // Function to close the Base64 popup
 function closeBase64Popup() {
-    const popup = document.getElementById('base64Popup');
-    popup.style.display = 'none';
+    document.getElementById('base64Popup').style.display = 'none';
+}
+
+// Add this function at the top of your file to handle offline analytics
+function sendAnalyticsEvent(eventName, eventParams) {
+    if (typeof gtag === 'function') {
+        // Check if browser is online
+        if (navigator.onLine) {
+            gtag('event', eventName, eventParams);
+            console.log('GA Event sent:', eventName);
+        } else {
+            console.warn('Browser is offline. Event not sent to Google Analytics:', eventName);
+            
+            // Store event in localStorage to send later when online
+            try {
+                const offlineEvents = JSON.parse(localStorage.getItem('offlineGAEvents') || '[]');
+                offlineEvents.push({
+                    eventName: eventName,
+                    eventParams: eventParams,
+                    timestamp: new Date().getTime()
+                });
+                localStorage.setItem('offlineGAEvents', JSON.stringify(offlineEvents));
+                console.log('Event stored for later sending:', eventName);
+            } catch (e) {
+                console.error('Failed to store offline event:', e);
+            }
+        }
+    } else {
+        console.warn('Google Analytics not available - event not sent:', eventName);
+    }
+}
+
+// Add event listener to send stored events when coming back online
+window.addEventListener('online', function() {
+    try {
+        const offlineEvents = JSON.parse(localStorage.getItem('offlineGAEvents') || '[]');
+        if (offlineEvents.length > 0) {
+            console.log('Back online. Sending stored events:', offlineEvents.length);
+            
+            offlineEvents.forEach(event => {
+                if (typeof gtag === 'function') {
+                    gtag('event', event.eventName, event.eventParams);
+                    console.log('Sent stored event:', event.eventName);
+                }
+            });
+            
+            // Clear stored events
+            localStorage.removeItem('offlineGAEvents');
+        }
+    } catch (e) {
+        console.error('Failed to process offline events:', e);
+    }
+});
+
+function convertStringToJSON() {
+    // Track the "Convert String to JSON" button click in Google Analytics
+    sendAnalyticsEvent('convert_string_to_json', {
+        'event_category': 'EMD Actions',
+        'event_label': 'Convert String to JSON Button Click',
+        'value': 1
+    });
+    
+    const inputArea = document.getElementById('emd-input');
+    const inputValue = inputArea.value.trim();
+    
+    if (!inputValue) {
+        alert('Please enter a string to convert to JSON');
+        return;
+    }
+    
+    try {
+        // Handle different input formats
+        let jsonData;
+        
+        // Check if the input is already valid JSON
+        try {
+            JSON.parse(inputValue);
+            alert('Input is already valid JSON. No conversion needed.');
+            return;
+        } catch (e) {
+            // Not valid JSON, continue with conversion
+        }
+        
+        // Process the input as a serialized string
+        let processedInput = inputValue;
+        
+        // Remove any leading/trailing quotes if present
+        if ((processedInput.startsWith('"') && processedInput.endsWith('"')) || 
+            (processedInput.startsWith("'") && processedInput.endsWith("'"))) {
+            processedInput = processedInput.slice(1, -1);
+        }
+        
+        // Handle different escape patterns
+        
+        // 1. Replace escaped quotes with actual quotes
+        processedInput = processedInput.replace(/\\"/g, '"');
+        
+        // 2. Handle double-escaped characters (e.g., \\n -> \n)
+        processedInput = processedInput.replace(/\\\\n/g, '\\n');
+        processedInput = processedInput.replace(/\\\\r/g, '\\r');
+        processedInput = processedInput.replace(/\\\\t/g, '\\t');
+        processedInput = processedInput.replace(/\\\\\//g, '\\/');
+        processedInput = processedInput.replace(/\\\\b/g, '\\b');
+        processedInput = processedInput.replace(/\\\\f/g, '\\f');
+        
+        // 3. Handle double-escaped backslashes
+        processedInput = processedInput.replace(/\\\\\\\\/g, '\\\\');
+        
+        try {
+            jsonData = JSON.parse(processedInput);
+        } catch (parseError) {
+            // If standard parsing fails, try an alternative approach
+            try {
+                // For strings that might be JSON.stringify'd multiple times
+                // This is a common pattern in some API responses
+                const evalSafe = (str) => {
+                    // Using Function constructor is safer than eval
+                    return (new Function('return ' + str))();
+                };
+                
+                // Only attempt this if the string looks like it might be valid JSON
+                if (/^\{.*\}$/.test(processedInput) || /^\[.*\]$/.test(processedInput)) {
+                    jsonData = evalSafe(processedInput);
+                } else {
+                    throw new Error('Input does not appear to be valid JSON structure');
+                }
+            } catch (evalError) {
+                throw new Error('Unable to parse the string as JSON. Please check the format.');
+            }
+        }
+        
+        // Format the JSON with proper indentation
+        const formattedJSON = JSON.stringify(jsonData, null, 2);
+        
+        // Update the input area with the formatted JSON
+        inputArea.value = formattedJSON;
+        
+        // Show success message
+        const statusElement = document.getElementById('validation-status');
+        const errorsElement = document.getElementById('validation-errors');
+        
+        statusElement.textContent = '✓ Successfully converted string to JSON';
+        statusElement.className = 'validation-status valid';
+        errorsElement.innerHTML = '';
+        
+    } catch (error) {
+        console.error('Error converting string to JSON:', error);
+        
+        // Show error message
+        const statusElement = document.getElementById('validation-status');
+        const errorsElement = document.getElementById('validation-errors');
+        
+        statusElement.textContent = '✗ Error converting string to JSON';
+        statusElement.className = 'validation-status invalid';
+        errorsElement.innerHTML = `<div class="error-item">
+            <span class="error-message">${error.message}</span>
+        </div>`;
+    }
 }

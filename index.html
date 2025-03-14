@@ -82,12 +82,14 @@
                     &nbsp;&nbsp;&nbsp;• "Convert to String" - Get the string format for API requests<br>
                     &nbsp;&nbsp;&nbsp;• "Encode Base64" - Convert EMD to Base64 encoded format<br>
                     &nbsp;&nbsp;&nbsp;• "Klarna Payment ready EMD" - Get EMD in Payment API format<br>
+                    &nbsp;&nbsp;&nbsp;• "Convert String to JSON" - Convert a serialized string back to JSON format<br>
                     5. Use "Clear" to reset the validator and start over
                     <br><br>
                     <strong>Notes:</strong><br>
                     • All validation happens in your browser - no data is sent to any server<br>
                     • The validator uses the same official Klarna schema as the generator<br>
-                    • Detailed error messages will help you identify and fix issues in your EMD
+                    • Detailed error messages will help you identify and fix issues in your EMD<br>
+                    • The String to JSON converter handles escaped quotes and various string formats
                 </div>
             </div>
             
@@ -96,7 +98,12 @@
                 <div class="section-content">
                     <div class="form-group">
                         <label for="emd-input">Paste your EMD JSON here:</label>
-                        <textarea id="emd-input" class="form-control validator-textarea" rows="10" placeholder='{"air_reservation_details": [...], ...}'></textarea>
+                        <textarea id="emd-input" class="form-control validator-textarea" rows="10" placeholder='{"air_reservation_details": [...], ...}
+
+# String to JSON Example:
+# Paste a serialized string like:
+# "{\"air_reservation_details\":[{\"pnr\":\"ABC123\"}]}"
+# Then click "Convert String to JSON"'></textarea>
                     </div>
                     <div class="button-container">
                         <button class="generate-btn" onclick="validateEMD()">Validate EMD</button>
@@ -105,6 +112,7 @@
                         <button class="generate-btn" onclick="showSerializedValidatorEMD()" id="serialize-validation-btn">Convert to String</button>
                         <button class="generate-btn" onclick="encodeBase64ValidatorEMD()" id="base64-validation-btn">Encode Base64</button>
                         <button class="generate-btn" onclick="showKlarnaPaymentReadyValidatorEMD()" id="klarna-ready-validation-btn">Klarna Payment ready EMD</button>
+                        <button class="generate-btn" onclick="convertStringToJSON()" id="string-to-json-btn">Convert String to JSON</button>
                     </div>
                     <div class="validation-results">
                         <h3>Validation Results:</h3>
