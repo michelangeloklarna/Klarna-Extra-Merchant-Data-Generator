@@ -520,6 +520,7 @@ function generateEMD() {
             'Ferry Reservation Details': 'ferry_reservation_details',
             'Bus Reservation Details': 'bus_reservation_details',
             'Car Rental Reservation Details': 'car_rental_reservation_details',
+            'Trip Reservation Details': 'trip_reservation_details',
             'Event': 'event',
             'Voucher': 'voucher',
             'Marketplace Seller Info': 'marketplace_seller_info',
@@ -552,7 +553,7 @@ function generateEMD() {
                     const fieldSchema = itemSchema.properties?.[key];
                     
                     if (fieldSchema) {
-                        const value = processFieldValue(input.value, fieldSchema);
+                        const value = processFieldValue(input.value, fieldSchema, key);
                         if (value !== undefined) {
                             itemData[key] = value;
                         }
@@ -579,7 +580,7 @@ function generateEMD() {
                             const fieldSchema = arraySchema.items?.properties?.[key];
                             
                             if (fieldSchema) {
-                                const value = processFieldValue(input.value, fieldSchema);
+                                const value = processFieldValue(input.value, fieldSchema, key);
                                 if (value !== undefined) {
                                     nestedData[key] = value;
                                 }
@@ -594,6 +595,37 @@ function generateEMD() {
                 
                 if (nestedItems.length > 0) {
                     itemData[arrayKey] = nestedItems;
+                }
+            });
+            
+            // Process nested objects
+            item.querySelectorAll('.nested-object').forEach(nestedObj => {
+                const objKey = nestedObj.querySelector('.nested-object-label').textContent
+                    .toLowerCase()
+                    .replace(/\s+/g, '_');
+                    
+                const objSchema = itemSchema.properties?.[objKey];
+                if (!objSchema || objSchema.type !== 'object') return;
+                
+                const nestedData = {};
+                
+                // Process all inputs in the nested object
+                nestedObj.querySelectorAll('.form-group > input, .form-group > select').forEach(input => {
+                    if (input.value) {
+                        const key = input.name || input.id;
+                        const fieldSchema = objSchema.properties?.[key];
+                        
+                        if (fieldSchema) {
+                            const value = processFieldValue(input.value, fieldSchema, key);
+                            if (value !== undefined) {
+                                nestedData[key] = value;
+                            }
+                        }
+                    }
+                });
+                
+                if (Object.keys(nestedData).length > 0) {
+                    itemData[objKey] = nestedData;
                 }
             });
             
@@ -667,7 +699,7 @@ function roundAllPriceValues(data) {
 }
 
 // Helper function to process field values according to schema
-function processFieldValue(value, schema) {
+function processFieldValue(value, schema, key) {
     if (!value) return undefined;
     
     switch (schema.type) {
@@ -1379,6 +1411,7 @@ function copySerializedEMD() {
     navigator.clipboard.writeText(text)
         .then(() => {
             // Provide visual feedback that the copy was successful
+            const copyBtn = document.querySelector('#serializePopup .popup-footer .generate-btn');
             const originalText = copyBtn.textContent;
             copyBtn.textContent = 'Copied!';
             
